@@ -1,0 +1,12 @@
+# Build configuration for code generation
+targets:
+  $default:
+    builders:
+      drift_dev:
+        enabled: true
+        options:
+          # Generate code for Drift database
+          store_date_time_values_as_text: false
+          named_parameters: true
+          skip_verification_code: false
+          use_data_class_name_for_companions: true

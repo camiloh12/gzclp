@@ -1,0 +1,173 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/routes/app_routes.dart';
+import '../bloc/workout/workout_bloc.dart';
+import '../bloc/workout/workout_event.dart';
+import '../bloc/workout/workout_state.dart';
+
+/// Home page - main entry point after onboarding
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => sl<WorkoutBloc>()..add(const CheckInProgressWorkout()),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('GZCLP Tracker'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.history),
+              onPressed: () {
+                // TODO: Navigate to history
+              },
+              tooltip: 'History',
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                // TODO: Navigate to settings
+              },
+              tooltip: 'Settings',
+            ),
+          ],
+        ),
+        body: BlocBuilder<WorkoutBloc, WorkoutState>(
+          builder: (context, state) {
+            if (state is WorkoutLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (state is WorkoutError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error: ${state.message}',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        context.read<WorkoutBloc>().add(const CheckInProgressWorkout());
+                      },
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            if (state is WorkoutInProgress) {
+              // Resume in-progress workout
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.fitness_center, size: 64),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Workout in Progress',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Day ${state.session.dayType}',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    LinearProgressIndicator(
+                      value: state.progressPercentage,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${state.completedSetsCount} / ${state.sets.length} sets completed',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).pushNamed(AppRoutes.activeWorkout);
+                      },
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text('Continue Workout'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // WorkoutReady state
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.fitness_center, size: 96, color: Colors.blue),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Ready to Lift!',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Phase 3: UI Implementation - Basic Flow Complete',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pushNamed(AppRoutes.startWorkout);
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Start Workout'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                  if (state is WorkoutReady && state.lastSession != null) ...[
+                    const SizedBox(height: 24),
+                    Card(
+                      margin: const EdgeInsets.all(16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Last Workout',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Day ${state.lastSession!.dayType}',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                            Text(
+                              state.lastSession!.dateStarted.toString().substring(0, 16),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
