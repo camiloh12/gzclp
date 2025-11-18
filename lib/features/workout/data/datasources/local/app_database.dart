@@ -289,11 +289,14 @@ class WorkoutSessionsDao extends DatabaseAccessor<AppDatabase> with _$WorkoutSes
 class WorkoutSetsDao extends DatabaseAccessor<AppDatabase> with _$WorkoutSetsDaoMixin {
   WorkoutSetsDao(super.db);
 
-  /// Get all sets for a specific session
+  /// Get all sets for a specific session, ordered by tier then set number
   Future<List<WorkoutSet>> getSetsForSession(int sessionId) {
     return (select(workoutSets)
       ..where((tbl) => tbl.sessionId.equals(sessionId))
-      ..orderBy([(t) => OrderingTerm.asc(t.setNumber)]))
+      ..orderBy([
+        (t) => OrderingTerm.asc(t.tier),
+        (t) => OrderingTerm.asc(t.setNumber),
+      ]))
         .get();
   }
 

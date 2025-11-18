@@ -77,6 +77,14 @@ class _RestTimerWidgetState extends State<RestTimerWidget> {
     });
   }
 
+  void _skipTimer() {
+    _timer?.cancel();
+    setState(() {
+      _remainingSeconds = 0;
+      _isRunning = false;
+    });
+  }
+
   String _formatTime(int seconds) {
     final minutes = seconds ~/ 60;
     final secs = seconds % 60;
@@ -186,8 +194,10 @@ class _RestTimerWidgetState extends State<RestTimerWidget> {
             ],
             const SizedBox(height: 16),
             // Control buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 if (_isRunning)
                   ElevatedButton.icon(
@@ -195,11 +205,21 @@ class _RestTimerWidgetState extends State<RestTimerWidget> {
                     icon: const Icon(Icons.pause),
                     label: const Text('Pause'),
                   )
-                else
+                else if (_remainingSeconds > 0)
                   ElevatedButton.icon(
                     onPressed: _startTimer,
                     icon: const Icon(Icons.play_arrow),
                     label: const Text('Start'),
+                  ),
+                if (_remainingSeconds > 0)
+                  ElevatedButton.icon(
+                    onPressed: _skipTimer,
+                    icon: const Icon(Icons.skip_next),
+                    label: const Text('Skip'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                    ),
                   ),
                 ElevatedButton.icon(
                   onPressed: _resetTimer,

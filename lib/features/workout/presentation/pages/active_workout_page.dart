@@ -156,10 +156,12 @@ class ActiveWorkoutPage extends StatelessWidget {
               },
             ),
             const SizedBox(height: 16),
-            // Rest timer
+            // Rest timer - key based on completed sets count to restart timer
             if (state.completedSetsCount > 0 &&
                 !state.allSetsCompleted)
-              const RestTimerWidget(),
+              RestTimerWidget(
+                key: ValueKey('rest_timer_${state.completedSetsCount}'),
+              ),
           ],
           const Divider(),
           // All sets list

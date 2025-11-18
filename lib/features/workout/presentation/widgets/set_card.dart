@@ -41,6 +41,16 @@ class _SetCardState extends State<SetCard> {
   }
 
   @override
+  void didUpdateWidget(SetCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reset controllers when the set changes
+    if (oldWidget.set.id != widget.set.id) {
+      _repsController.text = widget.set.actualReps?.toString() ?? '';
+      _weightController.text = widget.set.actualWeight?.toString() ?? widget.set.targetWeight.toString();
+    }
+  }
+
+  @override
   void dispose() {
     _repsController.dispose();
     _weightController.dispose();
