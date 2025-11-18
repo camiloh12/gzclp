@@ -156,9 +156,13 @@ LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     // driftDatabase handles both mobile and web platforms automatically
     // On mobile: Uses native SQLite
-    // On web: Uses IndexedDB for persistence
+    // On web: Uses IndexedDB for persistence via WebAssembly
     return driftDatabase(
       name: 'gzclp_tracker',
+      web: DriftWebOptions(
+        sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+        driftWorker: Uri.parse('drift_worker.dart.js'),
+      ),
     );
   });
 }
@@ -172,7 +176,7 @@ LazyDatabase _openConnection() {
   - Fast native performance
 
 - **Web (Chrome/Firefox/Edge/Safari):**
-  - Uses **IndexedDB** (browser database)
+  - Uses **IndexedDB** (browser database) via WebAssembly
   - Drift translates SQL to IndexedDB operations
   - Data persists across sessions
   - No backend required
@@ -185,17 +189,118 @@ LazyDatabase _openConnection() {
 dependencies:
   drift: ^2.20.3
   drift_flutter: ^0.2.1  # Mobile support
-  sqlite3: ^2.4.6        # Web support
+  sqlite3: ^2.4.6        # Web support (CRITICAL for browser compatibility)
   sqlite3_flutter_libs: ^0.5.24
 ```
+
+**Critical Addition:** The `sqlite3` package was essential for web platform support. Without it, the browser cannot run the SQLite WebAssembly module, causing database initialization failures.
 
 #### Web Assets
 **File:** `web/sqlite3.wasm`
 - Downloaded SQLite WebAssembly binary
-- ~660KB compressed
+- ~714KB (660KB compressed)
 - Used by Drift for web database operations
 
-### 3. Error Handling & Recovery
+**File:** `web/drift_worker.dart`
+- Worker script for database operations
+- Compiled to JavaScript: `web/drift_worker.dart.js` (~1.2MB)
+- Compilation command: `dart compile js drift_worker.dart -o drift_worker.dart.js`
+
+**Build Process for Web:**
+```bash
+# Compile drift worker
+cd web
+dart compile js drift_worker.dart -o drift_worker.dart.js
+
+# Build web app
+flutter build web
+```
+
+### 3. Critical Bug Fixes
+
+#### Issue 1: Infinite Loading Screen After Onboarding
+**Problem:** After completing onboarding, the app would redirect to the home page but get stuck showing a loading spinner indefinitely.
+
+**Root Cause:** In `WorkoutBloc._onCheckInProgressWorkout` (lines 55-70), the `fold()` method calls with async callbacks were not being awaited. This caused the handler to return immediately after emitting `WorkoutLoading`, without waiting for the async operations to complete and emit the final state.
+
+**Problematic Code:**
+```dart
+final result = await sessionRepository.getInProgressSession();
+
+result.fold(  // ❌ NOT AWAITED
+  (failure) => emit(WorkoutError(failure.message)),
+  (session) async {  // async callback
+    if (session != null) {
+      await _loadInProgressWorkout(session, emit);
+    } else {
+      final lastResult = await sessionRepository.getLastFinalizedSession();
+      lastResult.fold(  // ❌ NESTED NOT AWAITED
+        (_) => emit(const WorkoutReady()),
+        (lastSession) => emit(WorkoutReady(lastSession: lastSession)),
+      );
+    }
+  },
+);
+```
+
+**Fix Applied:**
+```dart
+final result = await sessionRepository.getInProgressSession();
+
+await result.fold(  // ✅ AWAITED
+  (failure) async => emit(WorkoutError(failure.message)),
+  (session) async {
+    if (session != null) {
+      await _loadInProgressWorkout(session, emit);
+    } else {
+      final lastResult = await sessionRepository.getLastFinalizedSession();
+      await lastResult.fold(  // ✅ NESTED AWAITED
+        (_) async => emit(const WorkoutReady()),
+        (lastSession) async => emit(WorkoutReady(lastSession: lastSession)),
+      );
+    }
+  },
+);
+```
+
+**Files Changed:**
+- `lib/features/workout/presentation/bloc/workout/workout_bloc.dart:45-74`
+
+**Impact:** Without this fix, the UI would never transition from `WorkoutLoading` to `WorkoutReady`, leaving users staring at a perpetual loading screen.
+
+#### Issue 2: Missing Web Worker JavaScript File
+**Problem:** Web app failed to initialize database due to missing `drift_worker.dart.js` file.
+
+**Root Cause:** The `web/drift_worker.dart` source file existed, but it needed to be compiled to JavaScript for browsers to execute it. Flutter's build process doesn't automatically compile Dart worker files.
+
+**Fix Applied:**
+```bash
+cd web
+dart compile js drift_worker.dart -o drift_worker.dart.js
+```
+
+**Generated Files:**
+- `web/drift_worker.dart.js` - Compiled worker script
+- `web/drift_worker.dart.js.map` - Source map for debugging
+- `web/drift_worker.dart.js.deps` - Dependency tracking
+
+**Impact:** Web database now initializes correctly with IndexedDB storage backend.
+
+#### Issue 3: Missing sqlite3 Package
+**Problem:** Web platform couldn't load SQLite WebAssembly module.
+
+**Root Cause:** The `sqlite3` package provides the web-specific bindings for Drift. The project only had `sqlite3_flutter_libs`, which only works for mobile platforms.
+
+**Fix Applied:**
+```yaml
+# pubspec.yaml
+dependencies:
+  sqlite3: ^2.4.6  # Added this line
+```
+
+**Impact:** Enabled proper SQLite WebAssembly initialization in browsers.
+
+### 4. Error Handling & Recovery
 
 #### Graceful Degradation
 - Database check failures default to onboarding (first-run scenario)
@@ -698,9 +803,11 @@ flutter build ios --release
 4. **Type Safety** - Compile-time checks caught errors early
 
 ### Challenges Overcome
-1. **Web Database** - Initially tried WebAssembly, simplified to IndexedDB
-2. **First-Run Scenario** - Added graceful error handling for no database
-3. **Session Recovery** - Needed careful state management for resume flow
+1. **Web Database Configuration** - Required compiling drift worker to JavaScript and adding sqlite3 package
+2. **Async/Await in BLoC** - Fixed unawaited fold() calls causing infinite loading states
+3. **First-Run Scenario** - Added graceful error handling for no database
+4. **Session Recovery** - Needed careful state management for resume flow
+5. **Web Worker Compilation** - Manual compilation required for drift_worker.dart.js
 
 ### Best Practices Established
 1. **Always use transactions** for multi-table operations
@@ -749,8 +856,10 @@ The GZCLP Tracker now provides:
 
 **Phase 4 Status: ✅ COMPLETE**
 
-**Generated:** Phase 4 Implementation
+**Completed:** 2025-11-06
 **Code Quality:** ✅ Clean (0 errors, 0 warnings)
-**Platform Support:** ✅ Android, iOS, Web
-**Database Integration:** ✅ Complete
-**User Flows:** ✅ Tested end-to-end
+**Platform Support:** ✅ Android, iOS, Web (all functional)
+**Database Integration:** ✅ Complete with IndexedDB for web
+**User Flows:** ✅ Tested end-to-end (onboarding + workout cycle)
+**Bug Fixes:** ✅ Async/await corrections, web worker compilation, dependency additions
+**Git Status:** ✅ Repository initialized with initial commit
