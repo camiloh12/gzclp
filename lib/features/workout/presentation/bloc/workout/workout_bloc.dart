@@ -40,6 +40,8 @@ class WorkoutBloc extends Bloc<WorkoutEvent, WorkoutState> {
     on<CompleteWorkout>(_onCompleteWorkout);
     on<CancelWorkout>(_onCancelWorkout);
     on<LoadWorkoutHistory>(_onLoadWorkoutHistory);
+    on<UpdateSetNotes>(_onUpdateSetNotes);
+    on<UpdateSessionNotes>(_onUpdateSessionNotes);
   }
 
   Future<void> _onCheckInProgressWorkout(
@@ -363,5 +365,75 @@ class WorkoutBloc extends Bloc<WorkoutEvent, WorkoutState> {
     }
 
     return setsList;
+  }
+
+  /// Handler for updating set notes
+  Future<void> _onUpdateSetNotes(
+    UpdateSetNotes event,
+    Emitter<WorkoutState> emit,
+  ) async {
+    if (state is! WorkoutInProgress) return;
+
+    final currentState = state as WorkoutInProgress;
+
+    try {
+      // Find the set to update
+      final setIndex = currentState.sets.indexWhere((s) => s.id == event.setId);
+      if (setIndex == -1) {
+        emit(const WorkoutError('Set not found'));
+        return;
+      }
+
+      // Update the set with notes
+      final updatedSet = currentState.sets[setIndex].copyWith(
+        setNotes: event.notes,
+      );
+
+      // Update in database
+      final result = await setRepository.updateSet(updatedSet);
+
+      result.fold(
+        (failure) => emit(WorkoutError(failure.message)),
+        (_) {
+          // Update state with the updated set
+          final updatedSets = List<WorkoutSetEntity>.from(currentState.sets);
+          updatedSets[setIndex] = updatedSet;
+
+          emit(currentState.copyWith(sets: updatedSets));
+        },
+      );
+    } catch (e) {
+      emit(WorkoutError('Failed to update set notes: $e'));
+    }
+  }
+
+  /// Handler for updating session notes
+  Future<void> _onUpdateSessionNotes(
+    UpdateSessionNotes event,
+    Emitter<WorkoutState> emit,
+  ) async {
+    if (state is! WorkoutInProgress) return;
+
+    final currentState = state as WorkoutInProgress;
+
+    try {
+      // Update the session with notes
+      final updatedSession = currentState.session.copyWith(
+        sessionNotes: event.notes,
+      );
+
+      // Update in database
+      final result = await sessionRepository.updateSession(updatedSession);
+
+      result.fold(
+        (failure) => emit(WorkoutError(failure.message)),
+        (_) {
+          // Update state with the updated session
+          emit(currentState.copyWith(session: updatedSession));
+        },
+      );
+    } catch (e) {
+      emit(WorkoutError('Failed to update session notes: $e'));
+    }
   }
 }

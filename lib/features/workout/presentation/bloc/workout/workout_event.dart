@@ -63,3 +63,27 @@ class CancelWorkout extends WorkoutEvent {
 class LoadWorkoutHistory extends WorkoutEvent {
   const LoadWorkoutHistory();
 }
+
+/// Update notes for a specific set
+class UpdateSetNotes extends WorkoutEvent {
+  final int setId;
+  final String? notes;
+
+  const UpdateSetNotes({
+    required this.setId,
+    this.notes,
+  });
+
+  @override
+  List<Object?> get props => [setId, notes];
+}
+
+/// Update notes for the current session
+class UpdateSessionNotes extends WorkoutEvent {
+  final String? notes;
+
+  const UpdateSessionNotes(this.notes);
+
+  @override
+  List<Object?> get props => [notes];
+}
