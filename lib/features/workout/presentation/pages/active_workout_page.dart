@@ -7,8 +7,10 @@ import '../../../../core/utils/lift_name_helper.dart';
 import '../bloc/workout/workout_bloc.dart';
 import '../bloc/workout/workout_event.dart';
 import '../bloc/workout/workout_state.dart';
+import '../widgets/notes_dialog.dart';
 import '../widgets/rest_timer_widget.dart';
 import '../widgets/set_card.dart';
+import '../widgets/workout_completion_celebration.dart';
 
 /// Active workout page - log sets during an active workout session
 class ActiveWorkoutPage extends StatelessWidget {
@@ -21,15 +23,26 @@ class ActiveWorkoutPage extends StatelessWidget {
       child: BlocConsumer<WorkoutBloc, WorkoutState>(
         listener: (context, state) {
           if (state is WorkoutCompleted) {
-            // Navigate back to home after workout completion
-            Navigator.of(context).pushNamedAndRemoveUntil(
-              AppRoutes.home,
-              (route) => false,
-            );
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Workout completed! Great job!'),
-                backgroundColor: Colors.green,
+            // Show celebration animation
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => WorkoutCompletionCelebration(
+                onDismiss: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  // Navigate back to home after celebration
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    AppRoutes.home,
+                    (route) => false,
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Workout completed! Great job!'),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
               ),
             );
           } else if (state is WorkoutError) {
@@ -95,6 +108,24 @@ class ActiveWorkoutPage extends StatelessWidget {
       appBar: AppBar(
         title: Text('Day ${state.session.dayType} Workout'),
         actions: [
+          // Session notes button
+          IconButton(
+            onPressed: () async {
+              final notes = await NotesDialog.showSessionNotes(
+                context: context,
+                initialNotes: state.session.sessionNotes,
+              );
+              if (context.mounted) {
+                context.read<WorkoutBloc>().add(UpdateSessionNotes(notes));
+              }
+            },
+            icon: Icon(
+              state.session.sessionNotes != null && state.session.sessionNotes!.isNotEmpty
+                  ? Icons.note
+                  : Icons.note_add_outlined,
+            ),
+            tooltip: 'Session Notes',
+          ),
           if (!state.allSetsCompleted)
             TextButton.icon(
               onPressed: () {
@@ -154,6 +185,12 @@ class ActiveWorkoutPage extends StatelessWidget {
                       actualWeight: weight,
                     ));
               },
+              onNotesChanged: (notes) {
+                context.read<WorkoutBloc>().add(UpdateSetNotes(
+                      setId: currentSet.id,
+                      notes: notes,
+                    ));
+              },
             ),
             const SizedBox(height: 16),
             // Rest timer - key based on completed sets count to restart timer
@@ -187,6 +224,12 @@ class ActiveWorkoutPage extends StatelessWidget {
                                   actualWeight: weight,
                                 ));
                           },
+                    onNotesChanged: (notes) {
+                      context.read<WorkoutBloc>().add(UpdateSetNotes(
+                            setId: set.id,
+                            notes: notes,
+                          ));
+                    },
                   ),
                 );
               },

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../domain/entities/workout_set_entity.dart';
+import 'amrap_guidance_dialog.dart';
+import 'notes_dialog.dart';
 
 /// Card widget for displaying and logging a set
 class SetCard extends StatefulWidget {
@@ -9,6 +11,7 @@ class SetCard extends StatefulWidget {
   final bool isMetric;
   final String? exerciseName;
   final Function(int reps, double? weight)? onLogSet;
+  final Function(String? notes)? onNotesChanged;
   final bool isCompact;
 
   const SetCard({
@@ -17,6 +20,7 @@ class SetCard extends StatefulWidget {
     required this.isMetric,
     this.exerciseName,
     this.onLogSet,
+    this.onNotesChanged,
     this.isCompact = false,
   });
 
@@ -55,6 +59,26 @@ class _SetCardState extends State<SetCard> {
     _repsController.dispose();
     _weightController.dispose();
     super.dispose();
+  }
+
+  void _showAmrapGuidance(BuildContext context) {
+    AmrapGuidanceDialog.show(
+      context: context,
+      tier: widget.set.tier,
+      targetReps: widget.set.targetReps,
+      previousAmrapReps: null, // TODO: Get from previous workout history
+    );
+  }
+
+  Future<void> _showNotesDialog(BuildContext context) async {
+    final notes = await NotesDialog.showSetNotes(
+      context: context,
+      initialNotes: widget.set.setNotes,
+    );
+
+    if (notes != null || notes != widget.set.setNotes) {
+      widget.onNotesChanged?.call(notes);
+    }
   }
 
   @override
@@ -191,24 +215,44 @@ class _SetCardState extends State<SetCard> {
               ),
               if (widget.set.isAmrap) ...[
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info_outline, color: Colors.orange),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'AMRAP: Do as many reps as possible (leave 1-2 in reserve)',
-                          style: Theme.of(context).textTheme.bodySmall,
+                InkWell(
+                  onTap: () => _showAmrapGuidance(context),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange, width: 2),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.flash_on, color: Colors.orange),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'AMRAP SET - As Many Reps As Possible',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.orange.shade900,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Tap for guidance and tips',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Colors.orange.shade700,
+                                    ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        const Icon(Icons.help_outline, color: Colors.orange),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -272,22 +316,43 @@ class _SetCardState extends State<SetCard> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        final reps = int.parse(_repsController.text);
-                        final weight = double.parse(_weightController.text);
-                        widget.onLogSet?.call(reps, weight);
-                      }
-                    },
-                    icon: const Icon(Icons.check),
-                    label: const Text('Log Set'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                Row(
+                  children: [
+                    // Notes button
+                    OutlinedButton.icon(
+                      onPressed: () => _showNotesDialog(context),
+                      icon: Icon(
+                        widget.set.setNotes != null && widget.set.setNotes!.isNotEmpty
+                            ? Icons.note
+                            : Icons.note_add,
+                      ),
+                      label: const Text('Notes'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 20,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    // Log Set button
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            final reps = int.parse(_repsController.text);
+                            final weight = double.parse(_weightController.text);
+                            widget.onLogSet?.call(reps, weight);
+                          }
+                        },
+                        icon: const Icon(Icons.check),
+                        label: const Text('Log Set'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ] else ...[
                 Container(
@@ -297,16 +362,41 @@ class _SetCardState extends State<SetCard> {
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.green),
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.check_circle, color: Colors.green),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Completed: ${widget.set.actualReps} reps @ ${widget.set.actualWeight} $unit',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Colors.green.shade900,
+                      Row(
+                        children: [
+                          const Icon(Icons.check_circle, color: Colors.green),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Completed: ${widget.set.actualReps} reps @ ${widget.set.actualWeight} $unit',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: Colors.green.shade900,
+                                  ),
                             ),
+                          ),
+                        ],
                       ),
+                      if (widget.set.setNotes != null && widget.set.setNotes!.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.note, size: 16, color: Colors.green.shade700),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                widget.set.setNotes!,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Colors.green.shade800,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
