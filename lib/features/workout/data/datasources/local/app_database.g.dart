@@ -1424,6 +1424,17 @@ class $WorkoutSetsTable extends WorkoutSets
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _exerciseNameMeta = const VerificationMeta(
+    'exerciseName',
+  );
+  @override
+  late final GeneratedColumn<String> exerciseName = GeneratedColumn<String>(
+    'exercise_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1437,6 +1448,7 @@ class $WorkoutSetsTable extends WorkoutSets
     actualWeight,
     isAmrap,
     setNotes,
+    exerciseName,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1531,6 +1543,15 @@ class $WorkoutSetsTable extends WorkoutSets
         setNotes.isAcceptableOrUnknown(data['set_notes']!, _setNotesMeta),
       );
     }
+    if (data.containsKey('exercise_name')) {
+      context.handle(
+        _exerciseNameMeta,
+        exerciseName.isAcceptableOrUnknown(
+          data['exercise_name']!,
+          _exerciseNameMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1584,6 +1605,10 @@ class $WorkoutSetsTable extends WorkoutSets
         DriftSqlType.string,
         data['${effectivePrefix}set_notes'],
       ),
+      exerciseName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exercise_name'],
+      ),
     );
   }
 
@@ -1630,6 +1655,10 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
 
   /// Optional notes about this specific set
   final String? setNotes;
+
+  /// Exercise name (used for T3 accessory exercises)
+  /// For T1/T2, this is null and liftId is used to determine name
+  final String? exerciseName;
   const WorkoutSet({
     required this.id,
     required this.sessionId,
@@ -1642,6 +1671,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     this.actualWeight,
     required this.isAmrap,
     this.setNotes,
+    this.exerciseName,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1662,6 +1692,9 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     map['is_amrap'] = Variable<bool>(isAmrap);
     if (!nullToAbsent || setNotes != null) {
       map['set_notes'] = Variable<String>(setNotes);
+    }
+    if (!nullToAbsent || exerciseName != null) {
+      map['exercise_name'] = Variable<String>(exerciseName);
     }
     return map;
   }
@@ -1685,6 +1718,9 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
       setNotes: setNotes == null && nullToAbsent
           ? const Value.absent()
           : Value(setNotes),
+      exerciseName: exerciseName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exerciseName),
     );
   }
 
@@ -1705,6 +1741,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
       actualWeight: serializer.fromJson<double?>(json['actualWeight']),
       isAmrap: serializer.fromJson<bool>(json['isAmrap']),
       setNotes: serializer.fromJson<String?>(json['setNotes']),
+      exerciseName: serializer.fromJson<String?>(json['exerciseName']),
     );
   }
   @override
@@ -1722,6 +1759,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
       'actualWeight': serializer.toJson<double?>(actualWeight),
       'isAmrap': serializer.toJson<bool>(isAmrap),
       'setNotes': serializer.toJson<String?>(setNotes),
+      'exerciseName': serializer.toJson<String?>(exerciseName),
     };
   }
 
@@ -1737,6 +1775,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     Value<double?> actualWeight = const Value.absent(),
     bool? isAmrap,
     Value<String?> setNotes = const Value.absent(),
+    Value<String?> exerciseName = const Value.absent(),
   }) => WorkoutSet(
     id: id ?? this.id,
     sessionId: sessionId ?? this.sessionId,
@@ -1749,6 +1788,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     actualWeight: actualWeight.present ? actualWeight.value : this.actualWeight,
     isAmrap: isAmrap ?? this.isAmrap,
     setNotes: setNotes.present ? setNotes.value : this.setNotes,
+    exerciseName: exerciseName.present ? exerciseName.value : this.exerciseName,
   );
   WorkoutSet copyWithCompanion(WorkoutSetCompanion data) {
     return WorkoutSet(
@@ -1771,6 +1811,9 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
           : this.actualWeight,
       isAmrap: data.isAmrap.present ? data.isAmrap.value : this.isAmrap,
       setNotes: data.setNotes.present ? data.setNotes.value : this.setNotes,
+      exerciseName: data.exerciseName.present
+          ? data.exerciseName.value
+          : this.exerciseName,
     );
   }
 
@@ -1787,7 +1830,8 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
           ..write('targetWeight: $targetWeight, ')
           ..write('actualWeight: $actualWeight, ')
           ..write('isAmrap: $isAmrap, ')
-          ..write('setNotes: $setNotes')
+          ..write('setNotes: $setNotes, ')
+          ..write('exerciseName: $exerciseName')
           ..write(')'))
         .toString();
   }
@@ -1805,6 +1849,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     actualWeight,
     isAmrap,
     setNotes,
+    exerciseName,
   );
   @override
   bool operator ==(Object other) =>
@@ -1820,7 +1865,8 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
           other.targetWeight == this.targetWeight &&
           other.actualWeight == this.actualWeight &&
           other.isAmrap == this.isAmrap &&
-          other.setNotes == this.setNotes);
+          other.setNotes == this.setNotes &&
+          other.exerciseName == this.exerciseName);
 }
 
 class WorkoutSetCompanion extends UpdateCompanion<WorkoutSet> {
@@ -1835,6 +1881,7 @@ class WorkoutSetCompanion extends UpdateCompanion<WorkoutSet> {
   final Value<double?> actualWeight;
   final Value<bool> isAmrap;
   final Value<String?> setNotes;
+  final Value<String?> exerciseName;
   const WorkoutSetCompanion({
     this.id = const Value.absent(),
     this.sessionId = const Value.absent(),
@@ -1847,6 +1894,7 @@ class WorkoutSetCompanion extends UpdateCompanion<WorkoutSet> {
     this.actualWeight = const Value.absent(),
     this.isAmrap = const Value.absent(),
     this.setNotes = const Value.absent(),
+    this.exerciseName = const Value.absent(),
   });
   WorkoutSetCompanion.insert({
     this.id = const Value.absent(),
@@ -1860,6 +1908,7 @@ class WorkoutSetCompanion extends UpdateCompanion<WorkoutSet> {
     this.actualWeight = const Value.absent(),
     this.isAmrap = const Value.absent(),
     this.setNotes = const Value.absent(),
+    this.exerciseName = const Value.absent(),
   }) : sessionId = Value(sessionId),
        liftId = Value(liftId),
        tier = Value(tier),
@@ -1878,6 +1927,7 @@ class WorkoutSetCompanion extends UpdateCompanion<WorkoutSet> {
     Expression<double>? actualWeight,
     Expression<bool>? isAmrap,
     Expression<String>? setNotes,
+    Expression<String>? exerciseName,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1891,6 +1941,7 @@ class WorkoutSetCompanion extends UpdateCompanion<WorkoutSet> {
       if (actualWeight != null) 'actual_weight': actualWeight,
       if (isAmrap != null) 'is_amrap': isAmrap,
       if (setNotes != null) 'set_notes': setNotes,
+      if (exerciseName != null) 'exercise_name': exerciseName,
     });
   }
 
@@ -1906,6 +1957,7 @@ class WorkoutSetCompanion extends UpdateCompanion<WorkoutSet> {
     Value<double?>? actualWeight,
     Value<bool>? isAmrap,
     Value<String?>? setNotes,
+    Value<String?>? exerciseName,
   }) {
     return WorkoutSetCompanion(
       id: id ?? this.id,
@@ -1919,6 +1971,7 @@ class WorkoutSetCompanion extends UpdateCompanion<WorkoutSet> {
       actualWeight: actualWeight ?? this.actualWeight,
       isAmrap: isAmrap ?? this.isAmrap,
       setNotes: setNotes ?? this.setNotes,
+      exerciseName: exerciseName ?? this.exerciseName,
     );
   }
 
@@ -1958,6 +2011,9 @@ class WorkoutSetCompanion extends UpdateCompanion<WorkoutSet> {
     if (setNotes.present) {
       map['set_notes'] = Variable<String>(setNotes.value);
     }
+    if (exerciseName.present) {
+      map['exercise_name'] = Variable<String>(exerciseName.value);
+    }
     return map;
   }
 
@@ -1974,7 +2030,8 @@ class WorkoutSetCompanion extends UpdateCompanion<WorkoutSet> {
           ..write('targetWeight: $targetWeight, ')
           ..write('actualWeight: $actualWeight, ')
           ..write('isAmrap: $isAmrap, ')
-          ..write('setNotes: $setNotes')
+          ..write('setNotes: $setNotes, ')
+          ..write('exerciseName: $exerciseName')
           ..write(')'))
         .toString();
   }
@@ -3931,6 +3988,7 @@ typedef $$WorkoutSetsTableCreateCompanionBuilder =
       Value<double?> actualWeight,
       Value<bool> isAmrap,
       Value<String?> setNotes,
+      Value<String?> exerciseName,
     });
 typedef $$WorkoutSetsTableUpdateCompanionBuilder =
     WorkoutSetCompanion Function({
@@ -3945,6 +4003,7 @@ typedef $$WorkoutSetsTableUpdateCompanionBuilder =
       Value<double?> actualWeight,
       Value<bool> isAmrap,
       Value<String?> setNotes,
+      Value<String?> exerciseName,
     });
 
 final class $$WorkoutSetsTableReferences
@@ -4040,6 +4099,11 @@ class $$WorkoutSetsTableFilterComposer
 
   ColumnFilters<String> get setNotes => $composableBuilder(
     column: $table.setNotes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get exerciseName => $composableBuilder(
+    column: $table.exerciseName,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4144,6 +4208,11 @@ class $$WorkoutSetsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get exerciseName => $composableBuilder(
+    column: $table.exerciseName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$WorkoutSessionsTableOrderingComposer get sessionId {
     final $$WorkoutSessionsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -4235,6 +4304,11 @@ class $$WorkoutSetsTableAnnotationComposer
   GeneratedColumn<String> get setNotes =>
       $composableBuilder(column: $table.setNotes, builder: (column) => column);
 
+  GeneratedColumn<String> get exerciseName => $composableBuilder(
+    column: $table.exerciseName,
+    builder: (column) => column,
+  );
+
   $$WorkoutSessionsTableAnnotationComposer get sessionId {
     final $$WorkoutSessionsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -4321,6 +4395,7 @@ class $$WorkoutSetsTableTableManager
                 Value<double?> actualWeight = const Value.absent(),
                 Value<bool> isAmrap = const Value.absent(),
                 Value<String?> setNotes = const Value.absent(),
+                Value<String?> exerciseName = const Value.absent(),
               }) => WorkoutSetCompanion(
                 id: id,
                 sessionId: sessionId,
@@ -4333,6 +4408,7 @@ class $$WorkoutSetsTableTableManager
                 actualWeight: actualWeight,
                 isAmrap: isAmrap,
                 setNotes: setNotes,
+                exerciseName: exerciseName,
               ),
           createCompanionCallback:
               ({
@@ -4347,6 +4423,7 @@ class $$WorkoutSetsTableTableManager
                 Value<double?> actualWeight = const Value.absent(),
                 Value<bool> isAmrap = const Value.absent(),
                 Value<String?> setNotes = const Value.absent(),
+                Value<String?> exerciseName = const Value.absent(),
               }) => WorkoutSetCompanion.insert(
                 id: id,
                 sessionId: sessionId,
@@ -4359,6 +4436,7 @@ class $$WorkoutSetsTableTableManager
                 actualWeight: actualWeight,
                 isAmrap: isAmrap,
                 setNotes: setNotes,
+                exerciseName: exerciseName,
               ),
           withReferenceMapper: (p0) => p0
               .map(

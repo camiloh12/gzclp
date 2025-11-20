@@ -43,6 +43,16 @@ class SetLiftWeights extends OnboardingEvent {
   List<Object?> get props => [liftId, liftName, t1Weight, t2Weight, t3Weight];
 }
 
+/// User selected T3 exercises
+class SetT3Exercises extends OnboardingEvent {
+  final Map<String, String> exercises; // Map of dayType -> exercise name
+
+  const SetT3Exercises(this.exercises);
+
+  @override
+  List<Object?> get props => [exercises];
+}
+
 /// Complete the onboarding process
 class CompleteOnboarding extends OnboardingEvent {
   final bool isMetric;

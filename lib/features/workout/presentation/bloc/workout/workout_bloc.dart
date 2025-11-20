@@ -147,7 +147,22 @@ class WorkoutBloc extends Bloc<WorkoutEvent, WorkoutState> {
                 weight: plan.t2Exercise.targetWeight,
               );
 
-              final allSets = [...t1Sets, ...t2Sets];
+              // Create sets for T3 exercises (accessories)
+              final List<WorkoutSetEntity> t3Sets = [];
+              for (final t3Plan in plan.t3Exercises) {
+                final exerciseSets = await _createSetsForExercise(
+                  sessionId: sessionId,
+                  liftId: plan.t1Exercise.lift.id, // Use T1 lift ID for T3 cycle state
+                  tier: 'T3',
+                  sets: t3Plan.sets,
+                  reps: t3Plan.reps,
+                  weight: t3Plan.targetWeight,
+                  exerciseName: t3Plan.exercise.name,
+                );
+                t3Sets.addAll(exerciseSets);
+              }
+
+              final allSets = [...t1Sets, ...t2Sets, ...t3Sets];
 
               // Save sets to database
               final setsResult = await setRepository.createSets(allSets);
@@ -324,6 +339,7 @@ class WorkoutBloc extends Bloc<WorkoutEvent, WorkoutState> {
     required int sets,
     required int reps,
     required double weight,
+    String? exerciseName,
   }) async {
     final setsList = <WorkoutSetEntity>[];
 
@@ -342,6 +358,7 @@ class WorkoutBloc extends Bloc<WorkoutEvent, WorkoutState> {
         targetWeight: weight,
         actualWeight: null,
         isAmrap: isAmrap,
+        exerciseName: exerciseName,
       ));
     }
 

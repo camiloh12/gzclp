@@ -3,7 +3,9 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
+import '../entities/accessory_exercise_entity.dart';
 import '../entities/lift_entity.dart';
+import '../repositories/accessory_exercise_repository.dart';
 import '../repositories/cycle_state_repository.dart';
 import '../repositories/lift_repository.dart';
 
@@ -19,10 +21,12 @@ import '../repositories/lift_repository.dart';
 class GenerateWorkoutForDay implements UseCase<WorkoutPlan, WorkoutDayParams> {
   final LiftRepository liftRepository;
   final CycleStateRepository cycleStateRepository;
+  final AccessoryExerciseRepository accessoryExerciseRepository;
 
   GenerateWorkoutForDay({
     required this.liftRepository,
     required this.cycleStateRepository,
+    required this.accessoryExerciseRepository,
   });
 
   @override
@@ -64,6 +68,36 @@ class GenerateWorkoutForDay implements UseCase<WorkoutPlan, WorkoutDayParams> {
       }
       final t2State = (t2StateResult as Right).value;
 
+      // Get T3 accessory exercises for this day
+      final t3ExercisesResult = await accessoryExerciseRepository.getAccessoriesForDay(dayType);
+      if (t3ExercisesResult.isLeft()) {
+        // If no T3 exercises found, just use empty list (not an error)
+        print('[GenerateWorkoutForDay] No T3 exercises found for day $dayType');
+      }
+      final t3Exercises = t3ExercisesResult.fold(
+        (_) => <AccessoryExerciseEntity>[],
+        (exercises) => exercises,
+      );
+
+      // Get cycle states for T3 exercises (if any)
+      final List<T3Plan> t3Plans = [];
+      for (final t3Exercise in t3Exercises) {
+        // For T3 exercises, we need a "fake" lift ID or we store T3 weights separately
+        // For MVP, let's use a simple approach: T3 exercises use T1 lift cycle states
+        // We'll get the T3 tier cycle state for the T1 lift of this day
+        final t3StateResult = await cycleStateRepository.getCycleStateByLiftAndTier(t1Lift.id, 'T3');
+
+        if (t3StateResult.isRight()) {
+          final t3State = (t3StateResult as Right).value;
+          t3Plans.add(T3Plan(
+            exercise: t3Exercise,
+            targetWeight: t3State.nextTargetWeight,
+            sets: 3, // T3 is always 3 sets
+            reps: 15, // T3 is always 15+ reps
+          ));
+        }
+      }
+
       // Generate workout plan
       final workoutPlan = WorkoutPlan(
         dayType: dayType,
@@ -83,6 +117,7 @@ class GenerateWorkoutForDay implements UseCase<WorkoutPlan, WorkoutDayParams> {
           sets: t2State.getRequiredSets(),
           reps: t2State.getRequiredReps(),
         ),
+        t3Exercises: t3Plans,
       );
 
       return Right(workoutPlan);
@@ -140,11 +175,13 @@ class WorkoutPlan {
   final String dayType;
   final LiftPlan t1Exercise;
   final LiftPlan t2Exercise;
+  final List<T3Plan> t3Exercises;
 
   const WorkoutPlan({
     required this.dayType,
     required this.t1Exercise,
     required this.t2Exercise,
+    this.t3Exercises = const [],
   });
 }
 
@@ -174,4 +211,22 @@ class LiftPlan {
       return '${sets}x$reps+'; // T3 always has + for AMRAP
     }
   }
+}
+
+/// Represents the plan for a T3 accessory exercise
+class T3Plan {
+  final AccessoryExerciseEntity exercise;
+  final double targetWeight;
+  final int sets;
+  final int reps;
+
+  const T3Plan({
+    required this.exercise,
+    required this.targetWeight,
+    required this.sets,
+    required this.reps,
+  });
+
+  /// Get description of the set/rep scheme (always includes + for AMRAP)
+  String get setRepScheme => '${sets}x$reps+';
 }

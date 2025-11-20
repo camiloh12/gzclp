@@ -40,6 +40,10 @@ class WorkoutSetEntity extends Equatable {
   /// Optional notes about this specific set
   final String? setNotes;
 
+  /// Exercise name (used for T3 accessory exercises)
+  /// For T1/T2, this is null and liftId is used to determine name
+  final String? exerciseName;
+
   const WorkoutSetEntity({
     required this.id,
     required this.sessionId,
@@ -52,6 +56,7 @@ class WorkoutSetEntity extends Equatable {
     this.actualWeight,
     this.isAmrap = false,
     this.setNotes,
+    this.exerciseName,
   });
 
   /// Check if this set has been completed (actualReps logged)
@@ -94,6 +99,7 @@ class WorkoutSetEntity extends Equatable {
     double? actualWeight,
     bool? isAmrap,
     String? setNotes,
+    String? exerciseName,
   }) {
     return WorkoutSetEntity(
       id: id ?? this.id,
@@ -107,6 +113,7 @@ class WorkoutSetEntity extends Equatable {
       actualWeight: actualWeight ?? this.actualWeight,
       isAmrap: isAmrap ?? this.isAmrap,
       setNotes: setNotes ?? this.setNotes,
+      exerciseName: exerciseName ?? this.exerciseName,
     );
   }
 
@@ -123,6 +130,7 @@ class WorkoutSetEntity extends Equatable {
         actualWeight,
         isAmrap,
         setNotes,
+        exerciseName,
       ];
 
   @override

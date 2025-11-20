@@ -1,10 +1,12 @@
 import 'package:get_it/get_it.dart';
 
 import '../../features/workout/data/datasources/local/app_database.dart';
+import '../../features/workout/data/repositories/accessory_exercise_repository_impl.dart';
 import '../../features/workout/data/repositories/cycle_state_repository_impl.dart';
 import '../../features/workout/data/repositories/lift_repository_impl.dart';
 import '../../features/workout/data/repositories/workout_session_repository_impl.dart';
 import '../../features/workout/data/repositories/workout_set_repository_impl.dart';
+import '../../features/workout/domain/repositories/accessory_exercise_repository.dart';
 import '../../features/workout/domain/repositories/cycle_state_repository.dart';
 import '../../features/workout/domain/repositories/lift_repository.dart';
 import '../../features/workout/domain/repositories/workout_session_repository.dart';
@@ -55,6 +57,10 @@ Future<void> init() async {
     () => WorkoutSetRepositoryImpl(sl()),
   );
 
+  sl.registerLazySingleton<AccessoryExerciseRepository>(
+    () => AccessoryExerciseRepositoryImpl(sl()),
+  );
+
   //! Phase 2: Use Cases - Progression Logic
   sl.registerLazySingleton(() => CalculateT1Progression());
   sl.registerLazySingleton(() => CalculateT2Progression());
@@ -76,6 +82,7 @@ Future<void> init() async {
     () => GenerateWorkoutForDay(
       liftRepository: sl(),
       cycleStateRepository: sl(),
+      accessoryExerciseRepository: sl(),
     ),
   );
 
@@ -88,6 +95,7 @@ Future<void> init() async {
     () => features.OnboardingBloc(
       liftRepository: sl(),
       cycleStateRepository: sl(),
+      accessoryExerciseRepository: sl(),
       database: sl(),
     ),
   );

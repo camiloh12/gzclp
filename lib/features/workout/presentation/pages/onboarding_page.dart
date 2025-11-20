@@ -7,6 +7,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../bloc/onboarding/onboarding_bloc.dart';
 import '../bloc/onboarding/onboarding_event.dart';
 import '../bloc/onboarding/onboarding_state.dart';
+import '../widgets/onboarding_t3_step.dart';
 import '../widgets/onboarding_unit_step.dart';
 import '../widgets/onboarding_weights_step.dart';
 import '../widgets/onboarding_welcome_step.dart';
@@ -23,6 +24,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   int _currentStep = 0;
   bool? _selectedIsMetric;
   final Map<int, double> _enteredWeights = {};
+  final Map<String, String> _selectedT3Exercises = {};
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +63,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         });
                       },
                     ),
-                    title: Text('Setup ${_currentStep + 1}/3'),
+                    title: Text('Setup ${_currentStep + 1}/4'),
                   )
                 : null,
             body: SafeArea(
@@ -112,7 +114,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             _enteredWeights[liftId] = weight;
           },
           onComplete: () {
-            print('[OnboardingPage] Complete button clicked');
+            print('[OnboardingPage] Weights complete, submitting SetLiftWeights events');
             print('[OnboardingPage] _enteredWeights: $_enteredWeights');
             // Submit all entered weights using SetLiftWeights events
             final bloc = context.read<OnboardingBloc>();
@@ -136,13 +138,35 @@ class _OnboardingPageState extends State<OnboardingPage> {
               ));
             }
 
-            // Finally, complete onboarding
+            // Move to T3 exercise selection
+            setState(() {
+              _currentStep = 3;
+            });
+          },
+        );
+      case 3:
+        return OnboardingT3Step(
+          selectedExercises: _selectedT3Exercises,
+          onExercisesSelected: (exercises) {
+            print('[OnboardingPage] T3 exercises selected: $exercises');
+            _selectedT3Exercises.clear();
+            _selectedT3Exercises.addAll(exercises);
+
+            // Dispatch SetT3Exercises event
+            context.read<OnboardingBloc>().add(SetT3Exercises(exercises));
+
+            // Complete onboarding
             print('[OnboardingPage] Adding CompleteOnboarding event with isMetric=$_selectedIsMetric');
             if (_selectedIsMetric != null) {
-              bloc.add(CompleteOnboarding(_selectedIsMetric!));
+              context.read<OnboardingBloc>().add(CompleteOnboarding(_selectedIsMetric!));
             } else {
               print('[OnboardingPage] ERROR: _selectedIsMetric is null!');
             }
+          },
+          onBack: () {
+            setState(() {
+              _currentStep = 2;
+            });
           },
         );
       default:
