@@ -22,7 +22,7 @@ class HomePage extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.history),
               onPressed: () {
-                // TODO: Navigate to history
+                Navigator.of(context).pushNamed(AppRoutes.history);
               },
               tooltip: 'History',
             ),
@@ -129,6 +129,20 @@ class HomePage extends StatelessWidget {
                     icon: const Icon(Icons.add),
                     label: const Text('Start Workout'),
                     style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pushNamed(AppRoutes.dashboard);
+                    },
+                    icon: const Icon(Icons.analytics),
+                    label: const Text('View Dashboard'),
+                    style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 32,
                         vertical: 16,

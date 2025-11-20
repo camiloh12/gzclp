@@ -21,6 +21,9 @@ class AppRoutes {
   /// Workout history
   static const String history = '/history';
 
+  /// Performance dashboard
+  static const String dashboard = '/dashboard';
+
   /// Settings
   static const String settings = '/settings';
 }
