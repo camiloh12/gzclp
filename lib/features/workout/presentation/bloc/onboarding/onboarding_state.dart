@@ -25,30 +25,34 @@ class OnboardingAlreadyComplete extends OnboardingState {
 
 /// Onboarding in progress
 class OnboardingInProgress extends OnboardingState {
-  final int currentStep; // 0: unit selection, 1-4: lift weights
+  final int currentStep; // 0: unit selection, 1-4: lift weights, 5: T3 exercises
   final bool? isMetric;
   final Map<int, LiftWeights> enteredWeights;
+  final Map<String, String> selectedT3Exercises; // dayType -> exercise name
 
   const OnboardingInProgress({
     required this.currentStep,
     this.isMetric,
     this.enteredWeights = const {},
+    this.selectedT3Exercises = const {},
   });
 
   OnboardingInProgress copyWith({
     int? currentStep,
     bool? isMetric,
     Map<int, LiftWeights>? enteredWeights,
+    Map<String, String>? selectedT3Exercises,
   }) {
     return OnboardingInProgress(
       currentStep: currentStep ?? this.currentStep,
       isMetric: isMetric ?? this.isMetric,
       enteredWeights: enteredWeights ?? this.enteredWeights,
+      selectedT3Exercises: selectedT3Exercises ?? this.selectedT3Exercises,
     );
   }
 
   @override
-  List<Object?> get props => [currentStep, isMetric, enteredWeights];
+  List<Object?> get props => [currentStep, isMetric, enteredWeights, selectedT3Exercises];
 }
 
 /// Completing onboarding (saving to database)

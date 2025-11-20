@@ -146,7 +146,7 @@ class ActiveWorkoutPage extends StatelessWidget {
             SetCard(
               set: currentSet,
               isMetric: state.isMetric,
-              exerciseName: LiftNameHelper.getLiftName(currentSet.liftId),
+              exerciseName: currentSet.exerciseName ?? LiftNameHelper.getLiftName(currentSet.liftId),
               onLogSet: (reps, weight) {
                 context.read<WorkoutBloc>().add(LogSet(
                       setId: currentSet.id,
@@ -176,7 +176,7 @@ class ActiveWorkoutPage extends StatelessWidget {
                   child: SetCard(
                     set: set,
                     isMetric: state.isMetric,
-                    exerciseName: LiftNameHelper.getLiftName(set.liftId),
+                    exerciseName: set.exerciseName ?? LiftNameHelper.getLiftName(set.liftId),
                     isCompact: true,
                     onLogSet: set.isCompleted
                         ? null

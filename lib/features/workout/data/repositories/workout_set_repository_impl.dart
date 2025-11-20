@@ -132,6 +132,7 @@ class WorkoutSetRepositoryImpl implements WorkoutSetRepository {
       actualWeight: set.actualWeight,
       isAmrap: set.isAmrap,
       setNotes: set.setNotes,
+      exerciseName: set.exerciseName,
     );
   }
 
@@ -149,6 +150,7 @@ class WorkoutSetRepositoryImpl implements WorkoutSetRepository {
       actualWeight: entity.actualWeight,
       isAmrap: entity.isAmrap,
       setNotes: entity.setNotes,
+      exerciseName: entity.exerciseName,
     );
   }
 
@@ -165,6 +167,7 @@ class WorkoutSetRepositoryImpl implements WorkoutSetRepository {
       actualWeight: drift.Value(entity.actualWeight),
       isAmrap: drift.Value(entity.isAmrap),
       setNotes: drift.Value(entity.setNotes),
+      exerciseName: drift.Value(entity.exerciseName),
     );
   }
 }

@@ -38,7 +38,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
@@ -47,7 +47,10 @@ class AppDatabase extends _$AppDatabase {
         await m.createAll();
       },
       onUpgrade: (Migrator m, int from, int to) async {
-        // Future migrations will go here
+        // Migration from version 1 to 2: Add exerciseName column to WorkoutSets
+        if (from < 2) {
+          await m.addColumn(workoutSets, workoutSets.exerciseName);
+        }
       },
       beforeOpen: (details) async {
         // Enable foreign key constraints

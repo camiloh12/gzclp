@@ -115,7 +115,7 @@ class _OnboardingWeightsStepState extends State<OnboardingWeightsStep> {
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
           ),
-          child: const Text('Complete Setup'),
+          child: const Text('Continue'),
         ),
       ],
     );

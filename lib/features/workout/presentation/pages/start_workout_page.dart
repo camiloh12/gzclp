@@ -3,13 +3,46 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../workout/domain/entities/accessory_exercise_entity.dart';
+import '../../../workout/domain/repositories/accessory_exercise_repository.dart';
 import '../bloc/workout/workout_bloc.dart';
 import '../bloc/workout/workout_event.dart';
 import '../bloc/workout/workout_state.dart';
 
 /// Start workout page - day selection
-class StartWorkoutPage extends StatelessWidget {
+class StartWorkoutPage extends StatefulWidget {
   const StartWorkoutPage({super.key});
+
+  @override
+  State<StartWorkoutPage> createState() => _StartWorkoutPageState();
+}
+
+class _StartWorkoutPageState extends State<StartWorkoutPage> {
+  final Map<String, List<AccessoryExerciseEntity>> _t3ExercisesByDay = {};
+  bool _isLoadingT3 = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadT3Exercises();
+  }
+
+  Future<void> _loadT3Exercises() async {
+    final accessoryRepo = sl<AccessoryExerciseRepository>();
+
+    // Load T3 exercises for all days
+    for (final day in ['A', 'B', 'C', 'D']) {
+      final result = await accessoryRepo.getAccessoriesForDay(day);
+      result.fold(
+        (_) => _t3ExercisesByDay[day] = [],
+        (exercises) => _t3ExercisesByDay[day] = exercises,
+      );
+    }
+
+    setState(() {
+      _isLoadingT3 = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,63 +81,63 @@ class StartWorkoutPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Start Workout'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Select Workout Day',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '4-day GZCLP rotation',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 24),
-            Expanded(
-              child: ListView(
+      body: _isLoadingT3
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildDayCard(
-                    context,
-                    'A',
-                    'Squat (T1)',
-                    'Overhead Press (T2)',
+                  Text(
+                    'Select Workout Day',
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
-                  const SizedBox(height: 12),
-                  _buildDayCard(
-                    context,
-                    'B',
-                    'Bench Press (T1)',
-                    'Deadlift (T2)',
+                  const SizedBox(height: 8),
+                  Text(
+                    '4-day GZCLP rotation',
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const SizedBox(height: 12),
-                  _buildDayCard(
-                    context,
-                    'C',
-                    'Bench Press (T1)',
-                    'Squat (T2)',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDayCard(
-                    context,
-                    'D',
-                    'Deadlift (T1)',
-                    'Overhead Press (T2)',
+                  const SizedBox(height: 24),
+                  Expanded(
+                    child: ListView(
+                      children: [
+                        _buildDayCard(
+                          context,
+                          'A',
+                          'Squat',
+                          'Overhead Press',
+                          _t3ExercisesByDay['A'] ?? [],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildDayCard(
+                          context,
+                          'B',
+                          'Bench Press',
+                          'Deadlift',
+                          _t3ExercisesByDay['B'] ?? [],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildDayCard(
+                          context,
+                          'C',
+                          'Bench Press',
+                          'Squat',
+                          _t3ExercisesByDay['C'] ?? [],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildDayCard(
+                          context,
+                          'D',
+                          'Deadlift',
+                          'Overhead Press',
+                          _t3ExercisesByDay['D'] ?? [],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Phase 3: UI Foundation\nWorkout execution flow coming in next iteration',
-              style: Theme.of(context).textTheme.bodySmall,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -113,6 +146,7 @@ class StartWorkoutPage extends StatelessWidget {
     String dayType,
     String t1Lift,
     String t2Lift,
+    List<AccessoryExerciseEntity> t3Exercises,
   ) {
     return Card(
       child: InkWell(
@@ -164,6 +198,15 @@ class StartWorkoutPage extends StatelessWidget {
               _buildLiftRow(context, 'T1', t1Lift),
               const SizedBox(height: 4),
               _buildLiftRow(context, 'T2', t2Lift),
+              // Display T3 exercises
+              if (t3Exercises.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                for (final t3Exercise in t3Exercises)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4.0),
+                    child: _buildLiftRow(context, 'T3', t3Exercise.name),
+                  ),
+              ],
             ],
           ),
         ),
@@ -172,28 +215,50 @@ class StartWorkoutPage extends StatelessWidget {
   }
 
   Widget _buildLiftRow(BuildContext context, String tier, String liftName) {
+    Color backgroundColor;
+    Color textColor;
+
+    switch (tier) {
+      case 'T1':
+        backgroundColor = Colors.red.withValues(alpha: 0.2);
+        textColor = Colors.red.shade900;
+        break;
+      case 'T2':
+        backgroundColor = Colors.blue.withValues(alpha: 0.2);
+        textColor = Colors.blue.shade900;
+        break;
+      case 'T3':
+        backgroundColor = Colors.green.withValues(alpha: 0.2);
+        textColor = Colors.green.shade900;
+        break;
+      default:
+        backgroundColor = Colors.grey.withValues(alpha: 0.2);
+        textColor = Colors.grey.shade900;
+    }
+
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: tier == 'T1'
-                ? Colors.red.withValues(alpha: 0.2)
-                : Colors.blue.withValues(alpha: 0.2),
+            color: backgroundColor,
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
             tier,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: tier == 'T1'
-                      ? Colors.red.shade900
-                      : Colors.blue.shade900,
+                  color: textColor,
                 ),
           ),
         ),
         const SizedBox(width: 8),
-        Text(liftName, style: Theme.of(context).textTheme.bodyMedium),
+        Expanded(
+          child: Text(
+            liftName,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
       ],
     );
   }

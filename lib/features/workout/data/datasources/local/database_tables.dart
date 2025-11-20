@@ -130,6 +130,10 @@ class WorkoutSets extends Table {
 
   /// Optional notes about this specific set
   TextColumn get setNotes => text().nullable()();
+
+  /// Exercise name (used for T3 accessory exercises)
+  /// For T1/T2, this is null and liftId is used to determine name
+  TextColumn get exerciseName => text().nullable()();
 }
 
 /// UserPreferences table - App settings and user preferences
