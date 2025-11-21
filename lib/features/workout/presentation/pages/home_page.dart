@@ -29,7 +29,7 @@ class HomePage extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () {
-                // TODO: Navigate to settings
+                Navigator.of(context).pushNamed(AppRoutes.settings);
               },
               tooltip: 'Settings',
             ),

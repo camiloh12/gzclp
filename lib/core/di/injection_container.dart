@@ -14,8 +14,10 @@ import '../../features/workout/domain/repositories/workout_set_repository.dart';
 import '../../features/workout/domain/usecases/calculate_t1_progression.dart';
 import '../../features/workout/domain/usecases/calculate_t2_progression.dart';
 import '../../features/workout/domain/usecases/calculate_t3_progression.dart';
+import '../../features/workout/domain/usecases/export_database.dart';
 import '../../features/workout/domain/usecases/finalize_workout_session.dart';
 import '../../features/workout/domain/usecases/generate_workout_for_day.dart';
+import '../../features/workout/domain/usecases/import_database.dart';
 import '../../features/workout/presentation/bloc/onboarding/onboarding_bloc.dart'
     as features;
 import '../../features/workout/presentation/bloc/workout/workout_bloc.dart'
@@ -85,6 +87,10 @@ Future<void> init() async {
       accessoryExerciseRepository: sl(),
     ),
   );
+
+  //! Phase 8: Data Management
+  sl.registerLazySingleton(() => ExportDatabase());
+  sl.registerLazySingleton(() => ImportDatabase());
 
   //! Phase 3: BLoCs
   // Note: BLoCs are registered as factories (new instance each time)

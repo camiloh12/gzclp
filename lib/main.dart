@@ -6,6 +6,7 @@ import 'features/workout/presentation/pages/active_workout_page.dart';
 import 'features/workout/presentation/pages/dashboard_page.dart';
 import 'features/workout/presentation/pages/home_page.dart';
 import 'features/workout/presentation/pages/onboarding_page.dart';
+import 'features/workout/presentation/pages/settings_page.dart';
 import 'features/workout/presentation/pages/splash_page.dart';
 import 'features/workout/presentation/pages/start_workout_page.dart';
 import 'features/workout/presentation/pages/workout_history_page.dart';
@@ -51,6 +52,7 @@ class GZCLPApp extends StatelessWidget {
         AppRoutes.activeWorkout: (context) => const ActiveWorkoutPage(),
         AppRoutes.history: (context) => const WorkoutHistoryPage(),
         AppRoutes.dashboard: (context) => const DashboardPage(),
+        AppRoutes.settings: (context) => const SettingsPage(),
       },
     );
   }

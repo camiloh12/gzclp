@@ -38,24 +38,69 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
       onCreate: (Migrator m) async {
         await m.createAll();
+        // Create indexes on new database
+        await _createIndexes();
       },
       onUpgrade: (Migrator m, int from, int to) async {
         // Migration from version 1 to 2: Add exerciseName column to WorkoutSets
         if (from < 2) {
           await m.addColumn(workoutSets, workoutSets.exerciseName);
         }
+        // Migration from version 2 to 3: Add performance indexes
+        if (from < 3) {
+          await _createIndexes();
+        }
       },
       beforeOpen: (details) async {
         // Enable foreign key constraints
         await customStatement('PRAGMA foreign_keys = ON;');
       },
+    );
+  }
+
+  /// Create database indexes for improved query performance
+  Future<void> _createIndexes() async {
+    // Index for finding in-progress sessions (CheckInProgressWorkout query)
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_workout_sessions_is_finalized '
+      'ON workout_sessions(is_finalized)',
+    );
+
+    // Index for finding sessions by date (used in history and dashboard)
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_workout_sessions_date_started '
+      'ON workout_sessions(date_started DESC)',
+    );
+
+    // Index for finding sets by session (very common query)
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_workout_sets_session_id '
+      'ON workout_sets(session_id)',
+    );
+
+    // Index for finding sets by lift and tier (used in progression calculation)
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_workout_sets_lift_tier '
+      'ON workout_sets(lift_id, tier)',
+    );
+
+    // Index for finding cycle states by lift (very common query)
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_cycle_states_lift_id '
+      'ON cycle_states(lift_id)',
+    );
+
+    // Index for finding accessories by day type (used in workout generation)
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_accessory_exercises_day_type '
+      'ON accessory_exercises(day_type, order_index)',
     );
   }
 }
