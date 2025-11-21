@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/di/injection_container.dart';
-import '../../../../core/utils/lift_name_helper.dart';
 import '../../data/datasources/local/app_database.dart';
 
 /// Performance dashboard showing current lift status and statistics
