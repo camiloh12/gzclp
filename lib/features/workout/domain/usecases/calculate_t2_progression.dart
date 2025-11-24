@@ -100,8 +100,8 @@ class CalculateT2Progression implements UseCase<CycleStateEntity, T2ProgressionP
   ) {
     // Get the T2 reset increment (15-20 lbs / 7.5-10 kg)
     final resetIncrement = isMetric
-        ? AppConstants.t2ResetIncrementKg
-        : AppConstants.t2ResetIncrementLbs;
+        ? AppConstants.T2.resetIncrementKg
+        : AppConstants.T2.resetIncrementLbs;
 
     // Calculate reset weight based on last successful Stage 1 weight
     final double resetWeight;

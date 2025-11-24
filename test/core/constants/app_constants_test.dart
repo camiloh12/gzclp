@@ -12,46 +12,38 @@ void main() {
     });
 
     test('should have correct T1 stage configurations', () {
-      expect(AppConstants.t1StageConfig[1]?['sets'], equals(5));
-      expect(AppConstants.t1StageConfig[1]?['reps'], equals(3));
-      expect(AppConstants.t1StageConfig[2]?['sets'], equals(6));
-      expect(AppConstants.t1StageConfig[2]?['reps'], equals(2));
-      expect(AppConstants.t1StageConfig[3]?['sets'], equals(10));
-      expect(AppConstants.t1StageConfig[3]?['reps'], equals(1));
+      expect(AppConstants.T1.stageConfig[1]?['sets'], equals(5));
+      expect(AppConstants.T1.stageConfig[1]?['reps'], equals(3));
+      expect(AppConstants.T1.stageConfig[2]?['sets'], equals(6));
+      expect(AppConstants.T1.stageConfig[2]?['reps'], equals(2));
+      expect(AppConstants.T1.stageConfig[3]?['sets'], equals(10));
+      expect(AppConstants.T1.stageConfig[3]?['reps'], equals(1));
     });
 
-    test('should have correct T2 stage configurations', () {
-      expect(AppConstants.t2StageConfig[1]?['sets'], equals(3));
-      expect(AppConstants.t2StageConfig[1]?['reps'], equals(10));
-      expect(AppConstants.t2StageConfig[2]?['sets'], equals(3));
-      expect(AppConstants.t2StageConfig[2]?['reps'], equals(8));
-      expect(AppConstants.t2StageConfig[3]?['sets'], equals(3));
-      expect(AppConstants.t2StageConfig[3]?['reps'], equals(6));
+    test('should have correct T2 stage configuration', () {
+      expect(AppConstants.T2.stageConfig[1]?['sets'], equals(3));
+      expect(AppConstants.T2.stageConfig[1]?['reps'], equals(10));
+      expect(AppConstants.T2.stageConfig[2]?['sets'], equals(3));
+      expect(AppConstants.T2.stageConfig[2]?['reps'], equals(8));
+      expect(AppConstants.T2.stageConfig[3]?['sets'], equals(3));
+      expect(AppConstants.T2.stageConfig[3]?['reps'], equals(6));
     });
 
-    test('should have correct T3 configuration', () {
-      expect(AppConstants.t3StageConfig['sets'], equals(3));
-      expect(AppConstants.t3StageConfig['reps'], equals(15));
+    test('should have correct T3 stage configuration', () {
+      expect(AppConstants.T3.stageConfig['sets'], equals(3));
+      expect(AppConstants.T3.stageConfig['reps'], equals(15));
     });
 
-    test('should have correct main lifts', () {
-      expect(
-        AppConstants.mainLifts,
-        equals([
-          'Squat',
-          'Bench Press',
-          'Deadlift',
-          'Overhead Press',
-        ]),
-      );
+    test('should have correct lift names', () {
+      expect(AppConstants.liftSquat, equals('Squat'));
+      expect(AppConstants.liftBench, equals('Bench Press'));
+      expect(AppConstants.liftDeadlift, equals('Deadlift'));
+      expect(AppConstants.liftOhp, equals('Overhead Press'));
     });
 
-    test('should have correct T1 reset percentage', () {
-      expect(AppConstants.t1ResetPercentage, equals(0.85));
-    });
-
-    test('should have correct T3 AMRAP threshold', () {
-      expect(AppConstants.t3AmrapThreshold, equals(25));
+    test('should have correct progression values', () {
+      expect(AppConstants.T1.resetPercentage, equals(0.85));
+      expect(AppConstants.T3.amrapThreshold, equals(25));
     });
   });
 }

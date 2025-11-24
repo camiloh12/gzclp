@@ -26,38 +26,13 @@ class AppConstants {
   static const List<String> tiers = ['T1', 'T2', 'T3'];
   static const List<int> stages = [1, 2, 3];
 
-  // Default Rest Times (seconds)
-  static const int defaultT1RestSeconds = 240;  // 4 minutes
-  static const int defaultT2RestSeconds = 150;  // 2.5 minutes
-  static const int defaultT3RestSeconds = 75;   // 1.25 minutes
-
   // Minimum rest between workouts (hours)
   static const int defaultMinimumRestHours = 24;
   static const int absoluteMinimumRestHours = 18;
 
-  // Weight increments (lbs)
-  static const double lowerBodyIncrementLbs = 10.0;
-  static const double upperBodyIncrementLbs = 5.0;
-
-  // Weight increments (kg)
-  static const double lowerBodyIncrementKg = 5.0;
-  static const double upperBodyIncrementKg = 2.5;
-
-  // T3 Progression threshold
-  static const int t3AmrapThreshold = 25;
-
-  // T3 Weight increments
-  static const double t3IncrementLbs = 5.0;
-  static const double t3IncrementKg = 2.5;
-
-  // T1 Reset percentage
-  static const double t1ResetPercentage = 0.85;  // 85% of 5RM
-
-  // T2 Reset increment (lbs)
-  static const double t2ResetIncrementLbs = 17.5;  // 15-20 lbs average
-
-  // T2 Reset increment (kg)
-  static const double t2ResetIncrementKg = 8.75;   // 7.5-10 kg average
+  // Unit Systems
+  static const String unitSystemImperial = 'imperial';
+  static const String unitSystemMetric = 'metric';
 
   // Main Lifts
   static const List<String> mainLifts = [
@@ -77,28 +52,65 @@ class AppConstants {
   static const String liftCategoryLower = 'lower';
   static const String liftCategoryUpper = 'upper';
 
-  // Unit Systems
-  static const String unitSystemImperial = 'imperial';
-  static const String unitSystemMetric = 'metric';
+  // Nested grouping for T1
+  static const t1 = _T1();
+  static const T1 = _T1(); // Alias for backward compatibility with my recent changes
 
-  // Stage Configurations
-  // T1
-  static const Map<int, Map<String, int>> t1StageConfig = {
+  // Nested grouping for T2
+  static const t2 = _T2();
+  static const T2 = _T2();
+
+  // Nested grouping for T3
+  static const t3 = _T3();
+  static const T3 = _T3();
+
+  // Nested grouping for Increments
+  static const increments = _Increments();
+  static const Increments = _Increments();
+}
+
+class _T1 {
+  const _T1();
+  final int restSeconds = 240; // 4 minutes
+  final double resetPercentage = 0.85; // 85% of 5RM
+  
+  final Map<int, Map<String, int>> stageConfig = const {
     1: {'sets': 5, 'reps': 3},   // 5x3+
     2: {'sets': 6, 'reps': 2},   // 6x2+
     3: {'sets': 10, 'reps': 1},  // 10x1+
   };
+}
 
-  // T2
-  static const Map<int, Map<String, int>> t2StageConfig = {
+class _T2 {
+  const _T2();
+  final int restSeconds = 120; // 2 minutes
+  final double resetIncrementLbs = 10.0; // Reset weight increment (lbs) - conservative
+  final double resetIncrementKg = 5.0;   // Reset weight increment (kg) - conservative
+  
+  final Map<int, Map<String, int>> stageConfig = const {
     1: {'sets': 3, 'reps': 10},  // 3x10
     2: {'sets': 3, 'reps': 8},   // 3x8
     3: {'sets': 3, 'reps': 6},   // 3x6
   };
+}
 
-  // T3
-  static const Map<String, int> t3StageConfig = {
-    'sets': 3,
-    'reps': 15,  // 3x15+
+class _T3 {
+  const _T3();
+  final int restSeconds = 90; // 60-90 seconds
+  final int amrapThreshold = 25; // Reps needed to increase weight
+  final double incrementLbs = 10.0;
+  final double incrementKg = 5.0;
+  
+  final Map<String, int> stageConfig = const {
+    'sets': 3, 
+    'reps': 15, // 3x15+
   };
+}
+
+class _Increments {
+  const _Increments();
+  final double lowerBodyLbs = 10.0;
+  final double upperBodyLbs = 5.0;
+  final double lowerBodyKg = 5.0;
+  final double upperBodyKg = 2.5;
 }

@@ -8,9 +8,7 @@ import '../repositories/cycle_state_repository.dart';
 import '../repositories/lift_repository.dart';
 import '../repositories/workout_session_repository.dart';
 import '../repositories/workout_set_repository.dart';
-import 'calculate_t1_progression.dart';
-import 'calculate_t2_progression.dart';
-import 'calculate_t3_progression.dart';
+import '../services/progression_service.dart';
 
 /// Finalizes a workout session by applying progression logic to all lifts
 ///
@@ -18,7 +16,7 @@ import 'calculate_t3_progression.dart';
 /// 1. Get all sets for the session
 /// 2. Group sets by lift and tier
 /// 3. Get current cycle states for each lift/tier
-/// 4. Apply appropriate progression logic (T1, T2, or T3)
+/// 4. Apply appropriate progression logic (T1, T2, or T3) via ProgressionService
 /// 5. Update all cycle states atomically in a transaction
 /// 6. Mark session as finalized
 ///
@@ -28,18 +26,14 @@ class FinalizeWorkoutSession implements UseCase<void, FinalizeSessionParams> {
   final WorkoutSetRepository setRepository;
   final CycleStateRepository cycleStateRepository;
   final LiftRepository liftRepository;
-  final CalculateT1Progression calculateT1Progression;
-  final CalculateT2Progression calculateT2Progression;
-  final CalculateT3Progression calculateT3Progression;
+  final ProgressionService progressionService;
 
   FinalizeWorkoutSession({
     required this.sessionRepository,
     required this.setRepository,
     required this.cycleStateRepository,
     required this.liftRepository,
-    required this.calculateT1Progression,
-    required this.calculateT2Progression,
-    required this.calculateT3Progression,
+    required this.progressionService,
   });
 
   @override
@@ -97,33 +91,14 @@ class FinalizeWorkoutSession implements UseCase<void, FinalizeSessionParams> {
         }
         final lift = (liftResult as Right).value;
 
-        // Apply appropriate progression logic based on tier
-        Either<Failure, CycleStateEntity> progressionResult;
-
-        if (tier == 'T1') {
-          progressionResult = await calculateT1Progression(T1ProgressionParams(
-            currentState: currentState,
-            completedSets: sets,
-            lift: lift,
-            isMetric: isMetric,
-          ));
-        } else if (tier == 'T2') {
-          progressionResult = await calculateT2Progression(T2ProgressionParams(
-            currentState: currentState,
-            completedSets: sets,
-            lift: lift,
-            isMetric: isMetric,
-          ));
-        } else if (tier == 'T3') {
-          progressionResult = await calculateT3Progression(T3ProgressionParams(
-            currentState: currentState,
-            completedSets: sets,
-            isMetric: isMetric,
-          ));
-        } else {
-          // Unknown tier, skip
-          continue;
-        }
+        // Apply progression logic via service
+        final progressionResult = await progressionService.calculateProgression(
+          currentState: currentState,
+          completedSets: sets,
+          lift: lift,
+          tier: tier,
+          isMetric: isMetric,
+        );
 
         // If progression calculation succeeded, add to update list
         if (progressionResult.isRight()) {

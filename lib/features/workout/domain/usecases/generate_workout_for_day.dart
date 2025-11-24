@@ -5,6 +5,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../entities/accessory_exercise_entity.dart';
 import '../entities/lift_entity.dart';
+import '../entities/workout_plan_entity.dart';
 import '../repositories/accessory_exercise_repository.dart';
 import '../repositories/cycle_state_repository.dart';
 import '../repositories/lift_repository.dart';
@@ -18,7 +19,7 @@ import '../repositories/lift_repository.dart';
 /// - Day D: Deadlift (T1), Overhead Press (T2), + T3 accessories
 ///
 /// Returns a WorkoutPlan containing the lifts and their programmed weights/sets/reps
-class GenerateWorkoutForDay implements UseCase<WorkoutPlan, WorkoutDayParams> {
+class GenerateWorkoutForDay implements UseCase<WorkoutPlanEntity, WorkoutDayParams> {
   final LiftRepository liftRepository;
   final CycleStateRepository cycleStateRepository;
   final AccessoryExerciseRepository accessoryExerciseRepository;
@@ -30,7 +31,7 @@ class GenerateWorkoutForDay implements UseCase<WorkoutPlan, WorkoutDayParams> {
   });
 
   @override
-  Future<Either<Failure, WorkoutPlan>> call(WorkoutDayParams params) async {
+  Future<Either<Failure, WorkoutPlanEntity>> call(WorkoutDayParams params) async {
     try {
       final dayType = params.dayType.toUpperCase();
 
@@ -99,7 +100,7 @@ class GenerateWorkoutForDay implements UseCase<WorkoutPlan, WorkoutDayParams> {
       }
 
       // Generate workout plan
-      final workoutPlan = WorkoutPlan(
+      final workoutPlan = WorkoutPlanEntity(
         dayType: dayType,
         t1Exercise: LiftPlan(
           lift: t1Lift,
@@ -170,63 +171,4 @@ class WorkoutDayParams {
   const WorkoutDayParams({required this.dayType});
 }
 
-/// Represents a complete workout plan for a day
-class WorkoutPlan {
-  final String dayType;
-  final LiftPlan t1Exercise;
-  final LiftPlan t2Exercise;
-  final List<T3Plan> t3Exercises;
 
-  const WorkoutPlan({
-    required this.dayType,
-    required this.t1Exercise,
-    required this.t2Exercise,
-    this.t3Exercises = const [],
-  });
-}
-
-/// Represents the plan for a single lift in a workout
-class LiftPlan {
-  final LiftEntity lift;
-  final String tier;
-  final int stage;
-  final double targetWeight;
-  final int sets;
-  final int reps;
-
-  const LiftPlan({
-    required this.lift,
-    required this.tier,
-    required this.stage,
-    required this.targetWeight,
-    required this.sets,
-    required this.reps,
-  });
-
-  /// Get description of the set/rep scheme (e.g., "5x3+", "3x10")
-  String get setRepScheme {
-    if (tier == 'T1' || tier == 'T2') {
-      return '${sets}x$reps'; // e.g., "5x3", "3x10"
-    } else {
-      return '${sets}x$reps+'; // T3 always has + for AMRAP
-    }
-  }
-}
-
-/// Represents the plan for a T3 accessory exercise
-class T3Plan {
-  final AccessoryExerciseEntity exercise;
-  final double targetWeight;
-  final int sets;
-  final int reps;
-
-  const T3Plan({
-    required this.exercise,
-    required this.targetWeight,
-    required this.sets,
-    required this.reps,
-  });
-
-  /// Get description of the set/rep scheme (always includes + for AMRAP)
-  String get setRepScheme => '${sets}x$reps+';
-}

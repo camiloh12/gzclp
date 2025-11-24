@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/routes/app_routes.dart';
-import '../bloc/workout/workout_bloc.dart';
-import '../bloc/workout/workout_event.dart';
-import '../bloc/workout/workout_state.dart';
+import '../bloc/session_manager/session_manager_bloc.dart';
+import '../bloc/session_manager/session_manager_event.dart';
+import '../bloc/session_manager/session_manager_state.dart';
 
 /// Home page - main entry point after onboarding
 class HomePage extends StatelessWidget {
@@ -14,7 +14,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<WorkoutBloc>()..add(const CheckInProgressWorkout()),
+      create: (_) => sl<SessionManagerBloc>()..add(const CheckInProgressSession()),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('GZCLP Tracker'),
@@ -35,13 +35,13 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
-        body: BlocBuilder<WorkoutBloc, WorkoutState>(
+        body: BlocBuilder<SessionManagerBloc, SessionManagerState>(
           builder: (context, state) {
-            if (state is WorkoutLoading) {
+            if (state is SessionManagerLoading) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (state is WorkoutError) {
+            if (state is SessionManagerError) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -56,7 +56,7 @@ class HomePage extends StatelessWidget {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
-                        context.read<WorkoutBloc>().add(const CheckInProgressWorkout());
+                        context.read<SessionManagerBloc>().add(const CheckInProgressSession());
                       },
                       child: const Text('Retry'),
                     ),
@@ -65,7 +65,7 @@ class HomePage extends StatelessWidget {
               );
             }
 
-            if (state is WorkoutInProgress) {
+            if (state is SessionManagerInProgress) {
               // Resume in-progress workout
               return Center(
                 child: Column(
@@ -82,15 +82,6 @@ class HomePage extends StatelessWidget {
                       'Day ${state.session.dayType}',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    const SizedBox(height: 16),
-                    LinearProgressIndicator(
-                      value: state.progressPercentage,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${state.completedSetsCount} / ${state.sets.length} sets completed',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
                     const SizedBox(height: 24),
                     ElevatedButton.icon(
                       onPressed: () {
@@ -104,7 +95,7 @@ class HomePage extends StatelessWidget {
               );
             }
 
-            // WorkoutReady state
+            // SessionManagerNoSession state
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -149,7 +140,7 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (state is WorkoutReady && state.lastSession != null) ...[
+                  if (state is SessionManagerNoSession && state.lastSession != null) ...[
                     const SizedBox(height: 24),
                     Card(
                       margin: const EdgeInsets.all(16),
