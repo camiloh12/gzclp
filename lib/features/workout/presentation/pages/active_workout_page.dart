@@ -4,9 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/utils/lift_name_helper.dart';
-import '../bloc/workout/workout_bloc.dart';
-import '../bloc/workout/workout_event.dart';
-import '../bloc/workout/workout_state.dart';
+import '../bloc/active_workout/active_workout_bloc.dart';
+import '../bloc/active_workout/active_workout_event.dart';
+import '../bloc/active_workout/active_workout_state.dart';
 import '../widgets/notes_dialog.dart';
 import '../widgets/rest_timer_widget.dart';
 import '../widgets/set_card.dart';
@@ -19,10 +19,10 @@ class ActiveWorkoutPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<WorkoutBloc>()..add(const CheckInProgressWorkout()),
-      child: BlocConsumer<WorkoutBloc, WorkoutState>(
+      create: (_) => sl<ActiveWorkoutBloc>()..add(const CheckForActiveWorkout()),
+      child: BlocConsumer<ActiveWorkoutBloc, ActiveWorkoutState>(
         listener: (context, state) {
-          if (state is WorkoutCompleted) {
+          if (state is ActiveWorkoutCompleted) {
             // Show celebration animation
             showDialog(
               context: context,
@@ -45,27 +45,32 @@ class ActiveWorkoutPage extends StatelessWidget {
                 },
               ),
             );
-          } else if (state is WorkoutError) {
+          } else if (state is ActiveWorkoutError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
                 backgroundColor: Colors.red,
               ),
             );
+          } else if (state is ActiveWorkoutCancelled) {
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              AppRoutes.home,
+              (route) => false,
+            );
           }
         },
         builder: (context, state) {
-          if (state is WorkoutLoading) {
+          if (state is ActiveWorkoutLoading) {
             return const Scaffold(
               body: Center(child: CircularProgressIndicator()),
             );
           }
 
-          if (state is WorkoutInProgress) {
+          if (state is ActiveWorkoutLoaded) {
             return _buildActiveWorkoutView(context, state);
           }
 
-          // No workout in progress
+          // No workout in progress or error
           return Scaffold(
             appBar: AppBar(title: const Text('Workout')),
             body: Center(
@@ -75,9 +80,14 @@ class ActiveWorkoutPage extends StatelessWidget {
                   const Icon(Icons.info_outline, size: 64),
                   const SizedBox(height: 16),
                   Text(
-                    'No active workout',
+                    state is ActiveWorkoutError ? 'Error loading workout' : 'No active workout',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
+                  if (state is ActiveWorkoutError)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(state.message, textAlign: TextAlign.center),
+                    ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
@@ -96,7 +106,7 @@ class ActiveWorkoutPage extends StatelessWidget {
 
   Widget _buildActiveWorkoutView(
     BuildContext context,
-    WorkoutInProgress state,
+    ActiveWorkoutLoaded state,
   ) {
     final currentSet = state.sets
         .where((s) => !s.isCompleted)
@@ -116,7 +126,7 @@ class ActiveWorkoutPage extends StatelessWidget {
                 initialNotes: state.session.sessionNotes,
               );
               if (context.mounted) {
-                context.read<WorkoutBloc>().add(UpdateSessionNotes(notes));
+                context.read<ActiveWorkoutBloc>().add(UpdateSessionNotes(notes: notes));
               }
             },
             icon: Icon(
@@ -139,119 +149,129 @@ class ActiveWorkoutPage extends StatelessWidget {
             ),
         ],
       ),
-      body: Column(
-        children: [
-          // Progress indicator
-          LinearProgressIndicator(
-            value: state.progressPercentage,
-            minHeight: 8,
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
               children: [
-                Text(
-                  'Progress',
-                  style: Theme.of(context).textTheme.titleMedium,
+                // Progress indicator
+                LinearProgressIndicator(
+                  value: state.progressPercentage,
+                  minHeight: 8,
                 ),
-                Text(
-                  '${state.completedSetsCount} / ${state.sets.length} sets',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Progress',
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
+                      Text(
+                        '${state.completedSetsCount} / ${state.sets.length} sets',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-          ),
-          const Divider(),
-          // Current set focus area
-          if (!state.allSetsCompleted) ...[
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Current Set',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ),
-            SetCard(
-              set: currentSet,
-              isMetric: state.isMetric,
-              exerciseName: currentSet.exerciseName ?? LiftNameHelper.getLiftName(currentSet.liftId),
-              onLogSet: (reps, weight) {
-                context.read<WorkoutBloc>().add(LogSet(
-                      setId: currentSet.id,
-                      actualReps: reps,
-                      actualWeight: weight,
-                    ));
-              },
-              onNotesChanged: (notes) {
-                context.read<WorkoutBloc>().add(UpdateSetNotes(
-                      setId: currentSet.id,
-                      notes: notes,
-                    ));
-              },
-            ),
-            const SizedBox(height: 16),
-            // Rest timer - key based on completed sets count to restart timer
-            if (state.completedSetsCount > 0 &&
-                !state.allSetsCompleted)
-              RestTimerWidget(
-                key: ValueKey('rest_timer_${state.completedSetsCount}'),
-              ),
-          ],
-          const Divider(),
-          // All sets list
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: state.sets.length,
-              itemBuilder: (context, index) {
-                final set = state.sets[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: SetCard(
-                    set: set,
+                const Divider(),
+                // Current set focus area
+                if (!state.allSetsCompleted) ...[
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'Current Set',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  SetCard(
+                    set: currentSet,
                     isMetric: state.isMetric,
-                    exerciseName: set.exerciseName ?? LiftNameHelper.getLiftName(set.liftId),
-                    isCompact: true,
-                    onLogSet: set.isCompleted
-                        ? null
-                        : (reps, weight) {
-                            context.read<WorkoutBloc>().add(LogSet(
-                                  setId: set.id,
-                                  actualReps: reps,
-                                  actualWeight: weight,
-                                ));
-                          },
+                    exerciseName: currentSet.exerciseName ?? LiftNameHelper.getLiftName(currentSet.liftId),
+                    onLogSet: (reps, weight) {
+                      context.read<ActiveWorkoutBloc>().add(LogSet(
+                            setId: currentSet.id,
+                            actualReps: reps,
+                            actualWeight: weight,
+                          ));
+                    },
                     onNotesChanged: (notes) {
-                      context.read<WorkoutBloc>().add(UpdateSetNotes(
-                            setId: set.id,
+                      context.read<ActiveWorkoutBloc>().add(UpdateSetNotes(
+                            setId: currentSet.id,
                             notes: notes,
                           ));
                     },
                   ),
-                );
-              },
+                  const SizedBox(height: 16),
+                  // Rest timer - key based on completed sets count to restart timer
+                  if (state.completedSetsCount > 0 &&
+                      !state.allSetsCompleted)
+                    RestTimerWidget(
+                      key: ValueKey('rest_timer_${state.completedSetsCount}'),
+                    ),
+                ],
+                const Divider(),
+              ],
+            ),
+          ),
+          // All sets list
+          SliverPadding(
+            padding: const EdgeInsets.all(16.0),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final set = state.sets[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: SetCard(
+                      set: set,
+                      isMetric: state.isMetric,
+                      exerciseName: set.exerciseName ?? LiftNameHelper.getLiftName(set.liftId),
+                      isCompact: true,
+                      onLogSet: set.isCompleted
+                          ? null
+                          : (reps, weight) {
+                              context.read<ActiveWorkoutBloc>().add(LogSet(
+                                    setId: set.id,
+                                    actualReps: reps,
+                                    actualWeight: weight,
+                                  ));
+                            },
+                      onNotesChanged: (notes) {
+                        context.read<ActiveWorkoutBloc>().add(UpdateSetNotes(
+                              setId: set.id,
+                              notes: notes,
+                            ));
+                      },
+                    ),
+                  );
+                },
+                childCount: state.sets.length,
+              ),
             ),
           ),
           // Complete workout button
           if (state.allSetsCompleted)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  context.read<WorkoutBloc>().add(const CompleteWorkout());
-                },
-                icon: const Icon(Icons.check_circle),
-                label: const Text('Complete Workout'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    context.read<ActiveWorkoutBloc>().add(const CompleteWorkout());
+                  },
+                  icon: const Icon(Icons.check_circle),
+                  label: const Text('Complete Workout'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
                   ),
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
                 ),
               ),
             ),
@@ -277,8 +297,8 @@ class ActiveWorkoutPage extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
+              context.read<ActiveWorkoutBloc>().add(const CancelWorkout());
               Navigator.of(dialogContext).pop();
-              Navigator.of(context).pop();
             },
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,

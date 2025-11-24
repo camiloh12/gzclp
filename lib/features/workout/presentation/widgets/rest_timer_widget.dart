@@ -26,7 +26,7 @@ class _RestTimerWidgetState extends State<RestTimerWidget> {
   @override
   void initState() {
     super.initState();
-    _remainingSeconds = widget.initialSeconds ?? AppConstants.defaultT1RestSeconds;
+    _remainingSeconds = widget.initialSeconds ?? AppConstants.T1.restSeconds;
     _startTimer();
   }
 
@@ -66,7 +66,7 @@ class _RestTimerWidgetState extends State<RestTimerWidget> {
   void _resetTimer() {
     _timer?.cancel();
     setState(() {
-      _remainingSeconds = widget.initialSeconds ?? AppConstants.defaultT1RestSeconds;
+      _remainingSeconds = widget.initialSeconds ?? AppConstants.T1.restSeconds;
       _isRunning = false;
     });
   }

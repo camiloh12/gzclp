@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/constants/app_constants.dart';
+
 /// Domain entity representing the progression state of a lift
 ///
 /// CRITICAL ENTITY - This is the heart of the GZCLP progression algorithm.
@@ -76,29 +78,11 @@ class CycleStateEntity extends Equatable {
   /// For AMRAP sets, this is the minimum required (e.g., 3 for 5x3+)
   int getRequiredReps() {
     if (isT1) {
-      switch (currentStage) {
-        case 1:
-          return 3; // 5x3+
-        case 2:
-          return 2; // 6x2+
-        case 3:
-          return 1; // 10x1+
-        default:
-          throw StateError('Invalid T1 stage: $currentStage');
-      }
+      return AppConstants.T1.stageConfig[currentStage]!['reps']!;
     } else if (isT2) {
-      switch (currentStage) {
-        case 1:
-          return 10; // 3x10
-        case 2:
-          return 8; // 3x8
-        case 3:
-          return 6; // 3x6
-        default:
-          throw StateError('Invalid T2 stage: $currentStage');
-      }
+      return AppConstants.T2.stageConfig[currentStage]!['reps']!;
     } else if (isT3) {
-      return 15; // 3x15+
+      return AppConstants.T3.stageConfig['reps']!;
     }
     throw StateError('Invalid tier: $currentTier');
   }
@@ -106,18 +90,11 @@ class CycleStateEntity extends Equatable {
   /// Get the number of sets for this tier and stage
   int getRequiredSets() {
     if (isT1) {
-      switch (currentStage) {
-        case 1:
-          return 5; // 5x3+
-        case 2:
-          return 6; // 6x2+
-        case 3:
-          return 10; // 10x1+
-        default:
-          throw StateError('Invalid T1 stage: $currentStage');
-      }
-    } else if (isT2 || isT3) {
-      return 3; // Both T2 and T3 use 3 sets
+      return AppConstants.T1.stageConfig[currentStage]!['sets']!;
+    } else if (isT2) {
+      return AppConstants.T2.stageConfig[currentStage]!['sets']!;
+    } else if (isT3) {
+      return AppConstants.T3.stageConfig['sets']!;
     }
     throw StateError('Invalid tier: $currentTier');
   }

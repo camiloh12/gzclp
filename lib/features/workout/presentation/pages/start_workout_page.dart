@@ -5,9 +5,9 @@ import '../../../../core/di/injection_container.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../workout/domain/entities/accessory_exercise_entity.dart';
 import '../../../workout/domain/repositories/accessory_exercise_repository.dart';
-import '../bloc/workout/workout_bloc.dart';
-import '../bloc/workout/workout_event.dart';
-import '../bloc/workout/workout_state.dart';
+import '../bloc/active_workout/active_workout_bloc.dart';
+import '../bloc/active_workout/active_workout_event.dart';
+import '../bloc/active_workout/active_workout_state.dart';
 
 /// Start workout page - day selection
 class StartWorkoutPage extends StatefulWidget {
@@ -47,13 +47,13 @@ class _StartWorkoutPageState extends State<StartWorkoutPage> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<WorkoutBloc>(),
-      child: BlocConsumer<WorkoutBloc, WorkoutState>(
+      create: (_) => sl<ActiveWorkoutBloc>(),
+      child: BlocConsumer<ActiveWorkoutBloc, ActiveWorkoutState>(
         listener: (context, state) {
-          if (state is WorkoutInProgress) {
+          if (state is ActiveWorkoutLoaded) {
             // Navigate to active workout page
             Navigator.of(context).pushReplacementNamed(AppRoutes.activeWorkout);
-          } else if (state is WorkoutError) {
+          } else if (state is ActiveWorkoutError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
@@ -63,7 +63,7 @@ class _StartWorkoutPageState extends State<StartWorkoutPage> {
           }
         },
         builder: (context, state) {
-          if (state is WorkoutLoading) {
+          if (state is ActiveWorkoutLoading) {
             return Scaffold(
               appBar: AppBar(title: const Text('Start Workout')),
               body: const Center(child: CircularProgressIndicator()),
@@ -152,7 +152,7 @@ class _StartWorkoutPageState extends State<StartWorkoutPage> {
       child: InkWell(
         onTap: () {
           // Start workout for selected day
-          context.read<WorkoutBloc>().add(StartWorkout(dayType));
+          context.read<ActiveWorkoutBloc>().add(StartWorkout(dayType: dayType));
         },
         child: Padding(
           padding: const EdgeInsets.all(16.0),

@@ -4,9 +4,9 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../domain/entities/workout_session_entity.dart';
-import '../bloc/workout/workout_bloc.dart';
-import '../bloc/workout/workout_event.dart';
-import '../bloc/workout/workout_state.dart';
+import '../bloc/workout_history/workout_history_bloc.dart';
+import '../bloc/workout_history/workout_history_event.dart';
+import '../bloc/workout_history/workout_history_state.dart';
 
 /// Workout history page showing past workout sessions
 class WorkoutHistoryPage extends StatefulWidget {
@@ -24,7 +24,7 @@ class _WorkoutHistoryPageState extends State<WorkoutHistoryPage> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<WorkoutBloc>()..add(const LoadWorkoutHistory()),
+      create: (_) => sl<WorkoutHistoryBloc>()..add(const LoadWorkoutHistory()),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Workout History'),
@@ -66,13 +66,13 @@ class _WorkoutHistoryPageState extends State<WorkoutHistoryPage> {
             ),
           ],
         ),
-        body: BlocBuilder<WorkoutBloc, WorkoutState>(
+        body: BlocBuilder<WorkoutHistoryBloc, WorkoutHistoryState>(
           builder: (context, state) {
-            if (state is WorkoutLoading) {
+            if (state is WorkoutHistoryLoading) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (state is WorkoutError) {
+            if (state is WorkoutHistoryError) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -92,7 +92,7 @@ class _WorkoutHistoryPageState extends State<WorkoutHistoryPage> {
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
                       onPressed: () {
-                        context.read<WorkoutBloc>().add(const LoadWorkoutHistory());
+                        context.read<WorkoutHistoryBloc>().add(const LoadWorkoutHistory());
                       },
                       icon: const Icon(Icons.refresh),
                       label: const Text('Retry'),

@@ -38,14 +38,14 @@ class CalculateT3Progression implements UseCase<CycleStateEntity, T3ProgressionP
       final amrapReps = amrapSet.actualReps!;
 
       // T3 progression threshold: 25+ reps on AMRAP set
-      if (amrapReps >= AppConstants.t3AmrapThreshold) {
+      if (amrapReps >= AppConstants.T3.amrapThreshold) {
         // SUCCESS: Increase weight by T3 increment
-        final t3Increment = isMetric
-            ? AppConstants.t3IncrementKg
-            : AppConstants.t3IncrementLbs;
+        final increment = isMetric
+            ? AppConstants.T3.incrementKg
+            : AppConstants.T3.incrementLbs;
 
         return Right(currentState.copyWith(
-          nextTargetWeight: currentState.nextTargetWeight + t3Increment,
+          nextTargetWeight: currentState.nextTargetWeight + increment,
           currentT3AmrapVolume: amrapReps, // Track AMRAP performance
           lastUpdated: DateTime.now(),
         ));

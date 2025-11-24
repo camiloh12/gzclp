@@ -88,7 +88,7 @@ class CalculateT1Progression implements UseCase<CycleStateEntity, T1ProgressionP
   /// Calculate T1 reset
   /// Reset to Stage 1 at 85% of current weight
   CycleStateEntity _calculateT1Reset(CycleStateEntity currentState, double weightIncrement) {
-    final resetWeight = currentState.nextTargetWeight * AppConstants.t1ResetPercentage;
+    final resetWeight = currentState.nextTargetWeight * AppConstants.T1.resetPercentage;
 
     // Round to nearest weight increment to keep weights practical
     final roundedWeight = _roundToIncrement(resetWeight, weightIncrement);

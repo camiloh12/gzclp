@@ -18,9 +18,16 @@ import '../../features/workout/domain/usecases/export_database.dart';
 import '../../features/workout/domain/usecases/finalize_workout_session.dart';
 import '../../features/workout/domain/usecases/generate_workout_for_day.dart';
 import '../../features/workout/domain/usecases/import_database.dart';
+import '../../features/workout/domain/services/progression_service.dart';
 import '../../features/workout/presentation/bloc/onboarding/onboarding_bloc.dart'
     as features;
-import '../../features/workout/presentation/bloc/workout/workout_bloc.dart'
+import '../../features/workout/presentation/bloc/active_workout/active_workout_bloc.dart'
+    as features;
+import '../../features/workout/presentation/bloc/session_manager/session_manager_bloc.dart'
+    as features;
+import '../../features/workout/presentation/bloc/workout_generation/workout_generation_bloc.dart'
+    as features;
+import '../../features/workout/presentation/bloc/workout_history/workout_history_bloc.dart'
     as features;
 
 /// Dependency Injection Container
@@ -68,15 +75,22 @@ Future<void> init() async {
   sl.registerLazySingleton(() => CalculateT2Progression());
   sl.registerLazySingleton(() => CalculateT3Progression());
 
+  // Service
+  sl.registerLazySingleton(
+    () => ProgressionService(
+      calculateT1Progression: sl(),
+      calculateT2Progression: sl(),
+      calculateT3Progression: sl(),
+    ),
+  );
+
   sl.registerLazySingleton(
     () => FinalizeWorkoutSession(
       sessionRepository: sl(),
       setRepository: sl(),
       cycleStateRepository: sl(),
       liftRepository: sl(),
-      calculateT1Progression: sl(),
-      calculateT2Progression: sl(),
-      calculateT3Progression: sl(),
+      progressionService: sl(),
     ),
   );
 
@@ -106,14 +120,36 @@ Future<void> init() async {
     ),
   );
 
-  // Workout BLoC
+  // Session Manager BLoC
   sl.registerFactory(
-    () => features.WorkoutBloc(
-      generateWorkoutForDay: sl(),
+    () => features.SessionManagerBloc(
+      sessionRepository: sl(),
+    ),
+  );
+
+  // Active Workout BLoC
+  sl.registerFactory(
+    () => features.ActiveWorkoutBloc(
       sessionRepository: sl(),
       setRepository: sl(),
       finalizeWorkoutSession: sl(),
+      generateWorkoutForDay: sl(),
       database: sl(),
+    ),
+  );
+
+  // Workout Generation BLoC
+  sl.registerFactory(
+    () => features.WorkoutGenerationBloc(
+      generateWorkoutForDay: sl(),
+      database: sl(),
+    ),
+  );
+
+  // Workout History BLoC
+  sl.registerFactory(
+    () => features.WorkoutHistoryBloc(
+      sessionRepository: sl(),
     ),
   );
 

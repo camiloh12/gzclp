@@ -166,6 +166,12 @@ class _ConfettiParticle extends StatelessWidget {
     final size = 6.0 + random.nextDouble() * 8.0;
     final rotation = random.nextDouble() * 2 * math.pi;
 
+    // Determine shape and radius once to avoid invalid combinations and flashing
+    final isCircle = random.nextBool();
+    final shape = isCircle ? BoxShape.circle : BoxShape.rectangle;
+    final borderRadius =
+        isCircle ? null : (random.nextBool() ? BorderRadius.circular(2) : null);
+
     return AnimatedBuilder(
       animation: controller,
       builder: (context, child) {
@@ -183,12 +189,8 @@ class _ConfettiParticle extends StatelessWidget {
               height: size,
               decoration: BoxDecoration(
                 color: color,
-                shape: random.nextBool()
-                    ? BoxShape.circle
-                    : BoxShape.rectangle,
-                borderRadius: random.nextBool()
-                    ? BorderRadius.circular(2)
-                    : null,
+                shape: shape,
+                borderRadius: borderRadius,
               ),
             ),
           ),
