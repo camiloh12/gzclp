@@ -93,6 +93,7 @@ Future<void> init() async {
 
   sl.registerLazySingleton(
     () => FinalizeWorkoutSession(
+      cycleRepository: sl(),
       sessionRepository: sl(),
       setRepository: sl(),
       cycleStateRepository: sl(),

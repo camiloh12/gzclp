@@ -19,6 +19,7 @@ class _DashboardPageState extends State<DashboardPage> {
   List<WorkoutSession> _recentSessions = [];
   int _totalWorkouts = 0;
   UserPreference? _preferences;
+  Cycle? _activeCycle;
 
   @override
   void initState() {
@@ -35,12 +36,22 @@ class _DashboardPageState extends State<DashboardPage> {
       final sessions = await _database.workoutSessionsDao.getFinalizedSessions();
       final prefs = await _database.userPreferencesDao.getPreferences();
 
+      // Try to get active cycle, but don't fail if it doesn't exist
+      Cycle? activeCycle;
+      try {
+        activeCycle = await _database.cyclesDao.getActiveCycle();
+      } catch (e) {
+        // Cycle table might not exist yet (pre-migration data)
+        activeCycle = null;
+      }
+
       setState(() {
         _lifts = lifts;
         _cycleStates = cycleStates;
         _recentSessions = sessions.take(5).toList();
         _totalWorkouts = sessions.length;
         _preferences = prefs;
+        _activeCycle = activeCycle;
         _isLoading = false;
       });
     } catch (e) {
@@ -83,6 +94,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Cycle progress card
+                    if (_activeCycle != null) ...[
+                      _buildCycleProgressCard(),
+                      const SizedBox(height: 24),
+                    ],
+
                     // Statistics summary
                     _buildStatsSummary(),
                     const SizedBox(height: 24),
@@ -100,6 +117,126 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildCycleProgressCard() {
+    if (_activeCycle == null) return const SizedBox.shrink();
+
+    final cycle = _activeCycle!;
+    final progressPercentage = (cycle.completedRotations / 12.0).clamp(0.0, 1.0);
+    final rotationsRemaining = 12 - cycle.completedRotations;
+
+    return Card(
+      elevation: 4,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Theme.of(context).colorScheme.primaryContainer,
+              Theme.of(context).colorScheme.secondaryContainer,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.auto_graph,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 32,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Cycle #${cycle.cycleNumber}',
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: cycle.status == 'active'
+                        ? Colors.green.withValues(alpha: 0.2)
+                        : Colors.grey.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: cycle.status == 'active' ? Colors.green : Colors.grey,
+                      ),
+                    ),
+                    child: Text(
+                      cycle.status.toUpperCase(),
+                      style: TextStyle(
+                        color: cycle.status == 'active' ? Colors.green : Colors.grey,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Progress',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 8),
+                        LinearProgressIndicator(
+                          value: progressPercentage,
+                          minHeight: 8,
+                          backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${cycle.completedRotations}/12 rotations completed',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Column(
+                    children: [
+                      Text(
+                        '${(progressPercentage * 100).toStringAsFixed(0)}%',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                      ),
+                      Text(
+                        '$rotationsRemaining left',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

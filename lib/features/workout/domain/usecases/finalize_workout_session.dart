@@ -4,6 +4,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../entities/cycle_state_entity.dart';
 import '../entities/workout_set_entity.dart';
+import '../repositories/cycle_repository.dart';
 import '../repositories/cycle_state_repository.dart';
 import '../repositories/lift_repository.dart';
 import '../repositories/workout_session_repository.dart';
@@ -19,9 +20,11 @@ import '../services/progression_service.dart';
 /// 4. Apply appropriate progression logic (T1, T2, or T3) via ProgressionService
 /// 5. Update all cycle states atomically in a transaction
 /// 6. Mark session as finalized
+/// 7. Track rotation completion and auto-complete cycle after 12 rotations
 ///
 /// IMPORTANT: This must be called exactly once per session to prevent duplicate progression updates.
 class FinalizeWorkoutSession implements UseCase<void, FinalizeSessionParams> {
+  final CycleRepository cycleRepository;
   final WorkoutSessionRepository sessionRepository;
   final WorkoutSetRepository setRepository;
   final CycleStateRepository cycleStateRepository;
@@ -29,6 +32,7 @@ class FinalizeWorkoutSession implements UseCase<void, FinalizeSessionParams> {
   final ProgressionService progressionService;
 
   FinalizeWorkoutSession({
+    required this.cycleRepository,
     required this.sessionRepository,
     required this.setRepository,
     required this.cycleStateRepository,
@@ -118,6 +122,32 @@ class FinalizeWorkoutSession implements UseCase<void, FinalizeSessionParams> {
       final finalizeResult = await sessionRepository.finalizeSession(sessionId, completedAt);
       if (finalizeResult.isLeft()) {
         return Left((finalizeResult as Left).value);
+      }
+
+      // 7. Track rotation completion and auto-complete cycle
+      // Check if this session completes a rotation (position 4 = day D)
+      if (session.rotationPosition == 4) {
+        // Increment cycle's completed rotations
+        final incrementResult = await cycleRepository.incrementRotations(session.cycleId);
+        if (incrementResult.isLeft()) {
+          // Log error but don't fail the finalization
+          print('[FinalizeWorkoutSession] Warning: Failed to increment rotation count');
+        }
+
+        // Check if cycle should be completed (12 rotations)
+        final cycleResult = await cycleRepository.getCycleById(session.cycleId);
+        if (cycleResult.isRight()) {
+          final cycle = (cycleResult as Right).value;
+          if (cycle.completedRotations >= 12) {
+            // Auto-complete the cycle
+            final completeResult = await cycleRepository.completeCycle(cycle.id, DateTime.now());
+            if (completeResult.isLeft()) {
+              print('[FinalizeWorkoutSession] Warning: Failed to auto-complete cycle');
+            } else {
+              print('[FinalizeWorkoutSession] Cycle #${cycle.cycleNumber} completed after 12 rotations!');
+            }
+          }
+        }
       }
 
       return const Right(null);

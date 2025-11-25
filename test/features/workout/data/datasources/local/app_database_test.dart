@@ -115,8 +115,16 @@ void main() {
 
   group('CycleStatesDao', () {
     late int squatId;
+    late int cycleId;
 
     setUp(() async {
+      // Insert a test cycle
+      cycleId = await database.cyclesDao.insertCycle(CycleCompanion.insert(
+        cycleNumber: 1,
+        startDate: DateTime.now(),
+        status: 'active',
+      ));
+
       // Insert a test lift
       squatId = await database.liftsDao.insertLift(LiftCompanion.insert(
         name: 'Squat',
@@ -127,6 +135,7 @@ void main() {
     test('should insert and retrieve a cycle state', () async {
       // Arrange
       final state = CycleStateCompanion.insert(
+        cycleId: cycleId,
         liftId: squatId,
         currentTier: 'T1',
         currentStage: 1,
@@ -148,6 +157,7 @@ void main() {
     test('should get cycle state by lift and tier', () async {
       // Arrange
       await database.cycleStatesDao.insertCycleState(CycleStateCompanion.insert(
+        cycleId: cycleId,
         liftId: squatId,
         currentTier: 'T1',
         currentStage: 1,
@@ -155,7 +165,7 @@ void main() {
       ));
 
       // Act
-      final state = await database.cycleStatesDao.getCycleStateByLiftAndTier(squatId, 'T1');
+      final state = await database.cycleStatesDao.getCycleStateByLiftAndTier(squatId, 'T1', cycleId);
 
       // Assert
       expect(state, isNotNull);
@@ -165,6 +175,7 @@ void main() {
     test('should update last_stage1_success_weight for T2 tracking', () async {
       // Arrange
       final id = await database.cycleStatesDao.insertCycleState(CycleStateCompanion.insert(
+        cycleId: cycleId,
         liftId: squatId,
         currentTier: 'T2',
         currentStage: 1,
@@ -184,12 +195,14 @@ void main() {
     test('should update multiple cycle states in transaction', () async {
       // Arrange
       final id1 = await database.cycleStatesDao.insertCycleState(CycleStateCompanion.insert(
+        cycleId: cycleId,
         liftId: squatId,
         currentTier: 'T1',
         currentStage: 1,
         nextTargetWeight: 225.0,
       ));
       final id2 = await database.cycleStatesDao.insertCycleState(CycleStateCompanion.insert(
+        cycleId: cycleId,
         liftId: squatId,
         currentTier: 'T2',
         currentStage: 1,
@@ -215,6 +228,7 @@ void main() {
     test('should enforce unique constraint on lift+tier combination', () async {
       // Arrange
       await database.cycleStatesDao.insertCycleState(CycleStateCompanion.insert(
+        cycleId: cycleId,
         liftId: squatId,
         currentTier: 'T1',
         currentStage: 1,
@@ -224,6 +238,7 @@ void main() {
       // Act & Assert - Attempt to insert duplicate
       expect(
         () => database.cycleStatesDao.insertCycleState(CycleStateCompanion.insert(
+          cycleId: cycleId,
           liftId: squatId,
           currentTier: 'T1', // Same lift and tier
           currentStage: 2,
@@ -235,10 +250,24 @@ void main() {
   });
 
   group('WorkoutSessionsDao', () {
+    late int cycleId;
+
+    setUp(() async {
+      // Insert a test cycle
+      cycleId = await database.cyclesDao.insertCycle(CycleCompanion.insert(
+        cycleNumber: 1,
+        startDate: DateTime.now(),
+        status: 'active',
+      ));
+    });
+
     test('should insert and retrieve a workout session', () async {
       // Arrange
       final session = WorkoutSessionCompanion.insert(
+        cycleId: cycleId,
         dayType: 'A',
+        rotationNumber: 1,
+        rotationPosition: 1,
         dateStarted: DateTime.now(),
       );
 
@@ -256,15 +285,24 @@ void main() {
       // Arrange
       final now = DateTime.now();
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
+        cycleId: cycleId,
         dayType: 'A',
+        rotationNumber: 1,
+        rotationPosition: 1,
         dateStarted: now.subtract(const Duration(days: 2)),
       ));
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
+        cycleId: cycleId,
         dayType: 'B',
+        rotationNumber: 1,
+        rotationPosition: 2,
         dateStarted: now.subtract(const Duration(days: 1)),
       ));
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
+        cycleId: cycleId,
         dayType: 'C',
+        rotationNumber: 1,
+        rotationPosition: 3,
         dateStarted: now,
       ));
 
@@ -279,12 +317,18 @@ void main() {
     test('should get in-progress session', () async {
       // Arrange
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
+        cycleId: cycleId,
         dayType: 'A',
+        rotationNumber: 1,
+        rotationPosition: 1,
         dateStarted: DateTime.now(),
         isFinalized: const Value(true),
       ));
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
+        cycleId: cycleId,
         dayType: 'B',
+        rotationNumber: 1,
+        rotationPosition: 2,
         dateStarted: DateTime.now(),
       ));
 
@@ -300,7 +344,10 @@ void main() {
     test('should finalize a session', () async {
       // Arrange
       final id = await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
+        cycleId: cycleId,
         dayType: 'A',
+        rotationNumber: 1,
+        rotationPosition: 1,
         dateStarted: DateTime.now(),
       ));
 
@@ -317,15 +364,24 @@ void main() {
     test('should get sessions by day type', () async {
       // Arrange
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
+        cycleId: cycleId,
         dayType: 'A',
+        rotationNumber: 1,
+        rotationPosition: 1,
         dateStarted: DateTime.now(),
       ));
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
+        cycleId: cycleId,
         dayType: 'A',
+        rotationNumber: 1,
+        rotationPosition: 1,
         dateStarted: DateTime.now().subtract(const Duration(days: 1)),
       ));
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
+        cycleId: cycleId,
         dayType: 'B',
+        rotationNumber: 1,
+        rotationPosition: 2,
         dateStarted: DateTime.now(),
       ));
 
@@ -341,15 +397,24 @@ void main() {
   group('WorkoutSetsDao', () {
     late int sessionId;
     late int squatId;
+    late int cycleId;
 
     setUp(() async {
       // Insert test data
+      cycleId = await database.cyclesDao.insertCycle(CycleCompanion.insert(
+        cycleNumber: 1,
+        startDate: DateTime.now(),
+        status: 'active',
+      ));
       squatId = await database.liftsDao.insertLift(LiftCompanion.insert(
         name: 'Squat',
         category: AppConstants.liftCategoryLower,
       ));
       sessionId = await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
+        cycleId: cycleId,
         dayType: 'A',
+        rotationNumber: 1,
+        rotationPosition: 1,
         dateStarted: DateTime.now(),
       ));
     });
@@ -627,11 +692,17 @@ void main() {
   group('Foreign Key Constraints', () {
     test('should cascade delete cycle states when lift is deleted', () async {
       // Arrange
+      final cycleId = await database.cyclesDao.insertCycle(CycleCompanion.insert(
+        cycleNumber: 1,
+        startDate: DateTime.now(),
+        status: 'active',
+      ));
       final liftId = await database.liftsDao.insertLift(LiftCompanion.insert(
         name: 'Squat',
         category: AppConstants.liftCategoryLower,
       ));
       await database.cycleStatesDao.insertCycleState(CycleStateCompanion.insert(
+        cycleId: cycleId,
         liftId: liftId,
         currentTier: 'T1',
         currentStage: 1,
@@ -640,7 +711,7 @@ void main() {
 
       // Act
       await database.liftsDao.deleteLift(liftId);
-      final states = await database.cycleStatesDao.getCycleStatesForLift(liftId);
+      final states = await database.cycleStatesDao.getCycleStatesForLift(liftId, cycleId);
 
       // Assert
       expect(states.isEmpty, isTrue);
