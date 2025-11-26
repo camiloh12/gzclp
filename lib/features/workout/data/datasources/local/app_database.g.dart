@@ -3,6 +3,435 @@
 part of 'app_database.dart';
 
 // ignore_for_file: type=lint
+class $CyclesTable extends Cycles with TableInfo<$CyclesTable, Cycle> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CyclesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _cycleNumberMeta = const VerificationMeta(
+    'cycleNumber',
+  );
+  @override
+  late final GeneratedColumn<int> cycleNumber = GeneratedColumn<int>(
+    'cycle_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _startDateMeta = const VerificationMeta(
+    'startDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startDate = GeneratedColumn<DateTime>(
+    'start_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endDateMeta = const VerificationMeta(
+    'endDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> endDate = GeneratedColumn<DateTime>(
+    'end_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 6,
+      maxTextLength: 9,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _completedRotationsMeta =
+      const VerificationMeta('completedRotations');
+  @override
+  late final GeneratedColumn<int> completedRotations = GeneratedColumn<int>(
+    'completed_rotations',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    cycleNumber,
+    startDate,
+    endDate,
+    status,
+    completedRotations,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cycles';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Cycle> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('cycle_number')) {
+      context.handle(
+        _cycleNumberMeta,
+        cycleNumber.isAcceptableOrUnknown(
+          data['cycle_number']!,
+          _cycleNumberMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_cycleNumberMeta);
+    }
+    if (data.containsKey('start_date')) {
+      context.handle(
+        _startDateMeta,
+        startDate.isAcceptableOrUnknown(data['start_date']!, _startDateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startDateMeta);
+    }
+    if (data.containsKey('end_date')) {
+      context.handle(
+        _endDateMeta,
+        endDate.isAcceptableOrUnknown(data['end_date']!, _endDateMeta),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('completed_rotations')) {
+      context.handle(
+        _completedRotationsMeta,
+        completedRotations.isAcceptableOrUnknown(
+          data['completed_rotations']!,
+          _completedRotationsMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Cycle map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Cycle(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      cycleNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cycle_number'],
+      )!,
+      startDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}start_date'],
+      )!,
+      endDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}end_date'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      completedRotations: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}completed_rotations'],
+      )!,
+    );
+  }
+
+  @override
+  $CyclesTable createAlias(String alias) {
+    return $CyclesTable(attachedDatabase, alias);
+  }
+}
+
+class Cycle extends DataClass implements Insertable<Cycle> {
+  final int id;
+
+  /// Cycle number (1, 2, 3, etc.)
+  /// First cycle is 1, increments with each new cycle
+  final int cycleNumber;
+
+  /// When this cycle started
+  final DateTime startDate;
+
+  /// When this cycle ended (null if still active)
+  final DateTime? endDate;
+
+  /// Status: 'active' or 'completed'
+  /// Only one cycle can be active at a time
+  final String status;
+
+  /// Number of complete A→B→C→D rotations completed in this cycle
+  /// Cycle completes when this reaches 12
+  final int completedRotations;
+  const Cycle({
+    required this.id,
+    required this.cycleNumber,
+    required this.startDate,
+    this.endDate,
+    required this.status,
+    required this.completedRotations,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['cycle_number'] = Variable<int>(cycleNumber);
+    map['start_date'] = Variable<DateTime>(startDate);
+    if (!nullToAbsent || endDate != null) {
+      map['end_date'] = Variable<DateTime>(endDate);
+    }
+    map['status'] = Variable<String>(status);
+    map['completed_rotations'] = Variable<int>(completedRotations);
+    return map;
+  }
+
+  CycleCompanion toCompanion(bool nullToAbsent) {
+    return CycleCompanion(
+      id: Value(id),
+      cycleNumber: Value(cycleNumber),
+      startDate: Value(startDate),
+      endDate: endDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endDate),
+      status: Value(status),
+      completedRotations: Value(completedRotations),
+    );
+  }
+
+  factory Cycle.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Cycle(
+      id: serializer.fromJson<int>(json['id']),
+      cycleNumber: serializer.fromJson<int>(json['cycleNumber']),
+      startDate: serializer.fromJson<DateTime>(json['startDate']),
+      endDate: serializer.fromJson<DateTime?>(json['endDate']),
+      status: serializer.fromJson<String>(json['status']),
+      completedRotations: serializer.fromJson<int>(json['completedRotations']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'cycleNumber': serializer.toJson<int>(cycleNumber),
+      'startDate': serializer.toJson<DateTime>(startDate),
+      'endDate': serializer.toJson<DateTime?>(endDate),
+      'status': serializer.toJson<String>(status),
+      'completedRotations': serializer.toJson<int>(completedRotations),
+    };
+  }
+
+  Cycle copyWith({
+    int? id,
+    int? cycleNumber,
+    DateTime? startDate,
+    Value<DateTime?> endDate = const Value.absent(),
+    String? status,
+    int? completedRotations,
+  }) => Cycle(
+    id: id ?? this.id,
+    cycleNumber: cycleNumber ?? this.cycleNumber,
+    startDate: startDate ?? this.startDate,
+    endDate: endDate.present ? endDate.value : this.endDate,
+    status: status ?? this.status,
+    completedRotations: completedRotations ?? this.completedRotations,
+  );
+  Cycle copyWithCompanion(CycleCompanion data) {
+    return Cycle(
+      id: data.id.present ? data.id.value : this.id,
+      cycleNumber: data.cycleNumber.present
+          ? data.cycleNumber.value
+          : this.cycleNumber,
+      startDate: data.startDate.present ? data.startDate.value : this.startDate,
+      endDate: data.endDate.present ? data.endDate.value : this.endDate,
+      status: data.status.present ? data.status.value : this.status,
+      completedRotations: data.completedRotations.present
+          ? data.completedRotations.value
+          : this.completedRotations,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Cycle(')
+          ..write('id: $id, ')
+          ..write('cycleNumber: $cycleNumber, ')
+          ..write('startDate: $startDate, ')
+          ..write('endDate: $endDate, ')
+          ..write('status: $status, ')
+          ..write('completedRotations: $completedRotations')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    cycleNumber,
+    startDate,
+    endDate,
+    status,
+    completedRotations,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Cycle &&
+          other.id == this.id &&
+          other.cycleNumber == this.cycleNumber &&
+          other.startDate == this.startDate &&
+          other.endDate == this.endDate &&
+          other.status == this.status &&
+          other.completedRotations == this.completedRotations);
+}
+
+class CycleCompanion extends UpdateCompanion<Cycle> {
+  final Value<int> id;
+  final Value<int> cycleNumber;
+  final Value<DateTime> startDate;
+  final Value<DateTime?> endDate;
+  final Value<String> status;
+  final Value<int> completedRotations;
+  const CycleCompanion({
+    this.id = const Value.absent(),
+    this.cycleNumber = const Value.absent(),
+    this.startDate = const Value.absent(),
+    this.endDate = const Value.absent(),
+    this.status = const Value.absent(),
+    this.completedRotations = const Value.absent(),
+  });
+  CycleCompanion.insert({
+    this.id = const Value.absent(),
+    required int cycleNumber,
+    required DateTime startDate,
+    this.endDate = const Value.absent(),
+    required String status,
+    this.completedRotations = const Value.absent(),
+  }) : cycleNumber = Value(cycleNumber),
+       startDate = Value(startDate),
+       status = Value(status);
+  static Insertable<Cycle> custom({
+    Expression<int>? id,
+    Expression<int>? cycleNumber,
+    Expression<DateTime>? startDate,
+    Expression<DateTime>? endDate,
+    Expression<String>? status,
+    Expression<int>? completedRotations,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (cycleNumber != null) 'cycle_number': cycleNumber,
+      if (startDate != null) 'start_date': startDate,
+      if (endDate != null) 'end_date': endDate,
+      if (status != null) 'status': status,
+      if (completedRotations != null) 'completed_rotations': completedRotations,
+    });
+  }
+
+  CycleCompanion copyWith({
+    Value<int>? id,
+    Value<int>? cycleNumber,
+    Value<DateTime>? startDate,
+    Value<DateTime?>? endDate,
+    Value<String>? status,
+    Value<int>? completedRotations,
+  }) {
+    return CycleCompanion(
+      id: id ?? this.id,
+      cycleNumber: cycleNumber ?? this.cycleNumber,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      status: status ?? this.status,
+      completedRotations: completedRotations ?? this.completedRotations,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (cycleNumber.present) {
+      map['cycle_number'] = Variable<int>(cycleNumber.value);
+    }
+    if (startDate.present) {
+      map['start_date'] = Variable<DateTime>(startDate.value);
+    }
+    if (endDate.present) {
+      map['end_date'] = Variable<DateTime>(endDate.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (completedRotations.present) {
+      map['completed_rotations'] = Variable<int>(completedRotations.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CycleCompanion(')
+          ..write('id: $id, ')
+          ..write('cycleNumber: $cycleNumber, ')
+          ..write('startDate: $startDate, ')
+          ..write('endDate: $endDate, ')
+          ..write('status: $status, ')
+          ..write('completedRotations: $completedRotations')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $LiftsTable extends Lifts with TableInfo<$LiftsTable, Lift> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -279,6 +708,20 @@ class $CycleStatesTable extends CycleStates
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
+  static const VerificationMeta _cycleIdMeta = const VerificationMeta(
+    'cycleId',
+  );
+  @override
+  late final GeneratedColumn<int> cycleId = GeneratedColumn<int>(
+    'cycle_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES cycles (id) ON DELETE CASCADE',
+    ),
+  );
   static const VerificationMeta _liftIdMeta = const VerificationMeta('liftId');
   @override
   late final GeneratedColumn<int> liftId = GeneratedColumn<int>(
@@ -365,6 +808,7 @@ class $CycleStatesTable extends CycleStates
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    cycleId,
     liftId,
     currentTier,
     currentStage,
@@ -387,6 +831,14 @@ class $CycleStatesTable extends CycleStates
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('cycle_id')) {
+      context.handle(
+        _cycleIdMeta,
+        cycleId.isAcceptableOrUnknown(data['cycle_id']!, _cycleIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cycleIdMeta);
     }
     if (data.containsKey('lift_id')) {
       context.handle(
@@ -463,7 +915,7 @@ class $CycleStatesTable extends CycleStates
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
   List<Set<GeneratedColumn>> get uniqueKeys => [
-    {liftId, currentTier},
+    {cycleId, liftId, currentTier},
   ];
   @override
   CycleState map(Map<String, dynamic> data, {String? tablePrefix}) {
@@ -472,6 +924,10 @@ class $CycleStatesTable extends CycleStates
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
+      )!,
+      cycleId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cycle_id'],
       )!,
       liftId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -513,6 +969,10 @@ class $CycleStatesTable extends CycleStates
 class CycleState extends DataClass implements Insertable<CycleState> {
   final int id;
 
+  /// Foreign key to Cycles table
+  /// Links this progression state to a specific training cycle
+  final int cycleId;
+
   /// Foreign key to Lifts table
   final int liftId;
 
@@ -544,6 +1004,7 @@ class CycleState extends DataClass implements Insertable<CycleState> {
   final DateTime lastUpdated;
   const CycleState({
     required this.id,
+    required this.cycleId,
     required this.liftId,
     required this.currentTier,
     required this.currentStage,
@@ -556,6 +1017,7 @@ class CycleState extends DataClass implements Insertable<CycleState> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    map['cycle_id'] = Variable<int>(cycleId);
     map['lift_id'] = Variable<int>(liftId);
     map['current_tier'] = Variable<String>(currentTier);
     map['current_stage'] = Variable<int>(currentStage);
@@ -573,6 +1035,7 @@ class CycleState extends DataClass implements Insertable<CycleState> {
   CycleStateCompanion toCompanion(bool nullToAbsent) {
     return CycleStateCompanion(
       id: Value(id),
+      cycleId: Value(cycleId),
       liftId: Value(liftId),
       currentTier: Value(currentTier),
       currentStage: Value(currentStage),
@@ -592,6 +1055,7 @@ class CycleState extends DataClass implements Insertable<CycleState> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return CycleState(
       id: serializer.fromJson<int>(json['id']),
+      cycleId: serializer.fromJson<int>(json['cycleId']),
       liftId: serializer.fromJson<int>(json['liftId']),
       currentTier: serializer.fromJson<String>(json['currentTier']),
       currentStage: serializer.fromJson<int>(json['currentStage']),
@@ -610,6 +1074,7 @@ class CycleState extends DataClass implements Insertable<CycleState> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'cycleId': serializer.toJson<int>(cycleId),
       'liftId': serializer.toJson<int>(liftId),
       'currentTier': serializer.toJson<String>(currentTier),
       'currentStage': serializer.toJson<int>(currentStage),
@@ -624,6 +1089,7 @@ class CycleState extends DataClass implements Insertable<CycleState> {
 
   CycleState copyWith({
     int? id,
+    int? cycleId,
     int? liftId,
     String? currentTier,
     int? currentStage,
@@ -633,6 +1099,7 @@ class CycleState extends DataClass implements Insertable<CycleState> {
     DateTime? lastUpdated,
   }) => CycleState(
     id: id ?? this.id,
+    cycleId: cycleId ?? this.cycleId,
     liftId: liftId ?? this.liftId,
     currentTier: currentTier ?? this.currentTier,
     currentStage: currentStage ?? this.currentStage,
@@ -646,6 +1113,7 @@ class CycleState extends DataClass implements Insertable<CycleState> {
   CycleState copyWithCompanion(CycleStateCompanion data) {
     return CycleState(
       id: data.id.present ? data.id.value : this.id,
+      cycleId: data.cycleId.present ? data.cycleId.value : this.cycleId,
       liftId: data.liftId.present ? data.liftId.value : this.liftId,
       currentTier: data.currentTier.present
           ? data.currentTier.value
@@ -672,6 +1140,7 @@ class CycleState extends DataClass implements Insertable<CycleState> {
   String toString() {
     return (StringBuffer('CycleState(')
           ..write('id: $id, ')
+          ..write('cycleId: $cycleId, ')
           ..write('liftId: $liftId, ')
           ..write('currentTier: $currentTier, ')
           ..write('currentStage: $currentStage, ')
@@ -686,6 +1155,7 @@ class CycleState extends DataClass implements Insertable<CycleState> {
   @override
   int get hashCode => Object.hash(
     id,
+    cycleId,
     liftId,
     currentTier,
     currentStage,
@@ -699,6 +1169,7 @@ class CycleState extends DataClass implements Insertable<CycleState> {
       identical(this, other) ||
       (other is CycleState &&
           other.id == this.id &&
+          other.cycleId == this.cycleId &&
           other.liftId == this.liftId &&
           other.currentTier == this.currentTier &&
           other.currentStage == this.currentStage &&
@@ -710,6 +1181,7 @@ class CycleState extends DataClass implements Insertable<CycleState> {
 
 class CycleStateCompanion extends UpdateCompanion<CycleState> {
   final Value<int> id;
+  final Value<int> cycleId;
   final Value<int> liftId;
   final Value<String> currentTier;
   final Value<int> currentStage;
@@ -719,6 +1191,7 @@ class CycleStateCompanion extends UpdateCompanion<CycleState> {
   final Value<DateTime> lastUpdated;
   const CycleStateCompanion({
     this.id = const Value.absent(),
+    this.cycleId = const Value.absent(),
     this.liftId = const Value.absent(),
     this.currentTier = const Value.absent(),
     this.currentStage = const Value.absent(),
@@ -729,6 +1202,7 @@ class CycleStateCompanion extends UpdateCompanion<CycleState> {
   });
   CycleStateCompanion.insert({
     this.id = const Value.absent(),
+    required int cycleId,
     required int liftId,
     required String currentTier,
     required int currentStage,
@@ -736,12 +1210,14 @@ class CycleStateCompanion extends UpdateCompanion<CycleState> {
     this.lastStage1SuccessWeight = const Value.absent(),
     this.currentT3AmrapVolume = const Value.absent(),
     this.lastUpdated = const Value.absent(),
-  }) : liftId = Value(liftId),
+  }) : cycleId = Value(cycleId),
+       liftId = Value(liftId),
        currentTier = Value(currentTier),
        currentStage = Value(currentStage),
        nextTargetWeight = Value(nextTargetWeight);
   static Insertable<CycleState> custom({
     Expression<int>? id,
+    Expression<int>? cycleId,
     Expression<int>? liftId,
     Expression<String>? currentTier,
     Expression<int>? currentStage,
@@ -752,6 +1228,7 @@ class CycleStateCompanion extends UpdateCompanion<CycleState> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (cycleId != null) 'cycle_id': cycleId,
       if (liftId != null) 'lift_id': liftId,
       if (currentTier != null) 'current_tier': currentTier,
       if (currentStage != null) 'current_stage': currentStage,
@@ -766,6 +1243,7 @@ class CycleStateCompanion extends UpdateCompanion<CycleState> {
 
   CycleStateCompanion copyWith({
     Value<int>? id,
+    Value<int>? cycleId,
     Value<int>? liftId,
     Value<String>? currentTier,
     Value<int>? currentStage,
@@ -776,6 +1254,7 @@ class CycleStateCompanion extends UpdateCompanion<CycleState> {
   }) {
     return CycleStateCompanion(
       id: id ?? this.id,
+      cycleId: cycleId ?? this.cycleId,
       liftId: liftId ?? this.liftId,
       currentTier: currentTier ?? this.currentTier,
       currentStage: currentStage ?? this.currentStage,
@@ -792,6 +1271,9 @@ class CycleStateCompanion extends UpdateCompanion<CycleState> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (cycleId.present) {
+      map['cycle_id'] = Variable<int>(cycleId.value);
     }
     if (liftId.present) {
       map['lift_id'] = Variable<int>(liftId.value);
@@ -825,6 +1307,7 @@ class CycleStateCompanion extends UpdateCompanion<CycleState> {
   String toString() {
     return (StringBuffer('CycleStateCompanion(')
           ..write('id: $id, ')
+          ..write('cycleId: $cycleId, ')
           ..write('liftId: $liftId, ')
           ..write('currentTier: $currentTier, ')
           ..write('currentStage: $currentStage, ')
@@ -856,6 +1339,20 @@ class $WorkoutSessionsTable extends WorkoutSessions
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
+  static const VerificationMeta _cycleIdMeta = const VerificationMeta(
+    'cycleId',
+  );
+  @override
+  late final GeneratedColumn<int> cycleId = GeneratedColumn<int>(
+    'cycle_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES cycles (id) ON DELETE CASCADE',
+    ),
+  );
   static const VerificationMeta _dayTypeMeta = const VerificationMeta(
     'dayType',
   );
@@ -869,6 +1366,28 @@ class $WorkoutSessionsTable extends WorkoutSessions
       maxTextLength: 1,
     ),
     type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rotationNumberMeta = const VerificationMeta(
+    'rotationNumber',
+  );
+  @override
+  late final GeneratedColumn<int> rotationNumber = GeneratedColumn<int>(
+    'rotation_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rotationPositionMeta = const VerificationMeta(
+    'rotationPosition',
+  );
+  @override
+  late final GeneratedColumn<int> rotationPosition = GeneratedColumn<int>(
+    'rotation_position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _dateStartedMeta = const VerificationMeta(
@@ -923,7 +1442,10 @@ class $WorkoutSessionsTable extends WorkoutSessions
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    cycleId,
     dayType,
+    rotationNumber,
+    rotationPosition,
     dateStarted,
     dateCompleted,
     isFinalized,
@@ -944,6 +1466,14 @@ class $WorkoutSessionsTable extends WorkoutSessions
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
+    if (data.containsKey('cycle_id')) {
+      context.handle(
+        _cycleIdMeta,
+        cycleId.isAcceptableOrUnknown(data['cycle_id']!, _cycleIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cycleIdMeta);
+    }
     if (data.containsKey('day_type')) {
       context.handle(
         _dayTypeMeta,
@@ -951,6 +1481,28 @@ class $WorkoutSessionsTable extends WorkoutSessions
       );
     } else if (isInserting) {
       context.missing(_dayTypeMeta);
+    }
+    if (data.containsKey('rotation_number')) {
+      context.handle(
+        _rotationNumberMeta,
+        rotationNumber.isAcceptableOrUnknown(
+          data['rotation_number']!,
+          _rotationNumberMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_rotationNumberMeta);
+    }
+    if (data.containsKey('rotation_position')) {
+      context.handle(
+        _rotationPositionMeta,
+        rotationPosition.isAcceptableOrUnknown(
+          data['rotation_position']!,
+          _rotationPositionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_rotationPositionMeta);
     }
     if (data.containsKey('date_started')) {
       context.handle(
@@ -1003,9 +1555,21 @@ class $WorkoutSessionsTable extends WorkoutSessions
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
+      cycleId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cycle_id'],
+      )!,
       dayType: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}day_type'],
+      )!,
+      rotationNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rotation_number'],
+      )!,
+      rotationPosition: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rotation_position'],
       )!,
       dateStarted: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -1035,9 +1599,21 @@ class $WorkoutSessionsTable extends WorkoutSessions
 class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
   final int id;
 
+  /// Foreign key to Cycles table
+  /// Links this session to a specific training cycle
+  final int cycleId;
+
   /// Day type: 'A', 'B', 'C', or 'D'
   /// Determines which lifts are performed
   final String dayType;
+
+  /// Which rotation number this session belongs to (1-12)
+  /// Used to track progress toward cycle completion
+  final int rotationNumber;
+
+  /// Position within the rotation (1-4 for A, B, C, D)
+  /// A=1, B=2, C=3, D=4
+  final int rotationPosition;
 
   /// When the workout was started
   final DateTime dateStarted;
@@ -1053,7 +1629,10 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
   final String? sessionNotes;
   const WorkoutSession({
     required this.id,
+    required this.cycleId,
     required this.dayType,
+    required this.rotationNumber,
+    required this.rotationPosition,
     required this.dateStarted,
     this.dateCompleted,
     required this.isFinalized,
@@ -1063,7 +1642,10 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    map['cycle_id'] = Variable<int>(cycleId);
     map['day_type'] = Variable<String>(dayType);
+    map['rotation_number'] = Variable<int>(rotationNumber);
+    map['rotation_position'] = Variable<int>(rotationPosition);
     map['date_started'] = Variable<DateTime>(dateStarted);
     if (!nullToAbsent || dateCompleted != null) {
       map['date_completed'] = Variable<DateTime>(dateCompleted);
@@ -1078,7 +1660,10 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
   WorkoutSessionCompanion toCompanion(bool nullToAbsent) {
     return WorkoutSessionCompanion(
       id: Value(id),
+      cycleId: Value(cycleId),
       dayType: Value(dayType),
+      rotationNumber: Value(rotationNumber),
+      rotationPosition: Value(rotationPosition),
       dateStarted: Value(dateStarted),
       dateCompleted: dateCompleted == null && nullToAbsent
           ? const Value.absent()
@@ -1097,7 +1682,10 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return WorkoutSession(
       id: serializer.fromJson<int>(json['id']),
+      cycleId: serializer.fromJson<int>(json['cycleId']),
       dayType: serializer.fromJson<String>(json['dayType']),
+      rotationNumber: serializer.fromJson<int>(json['rotationNumber']),
+      rotationPosition: serializer.fromJson<int>(json['rotationPosition']),
       dateStarted: serializer.fromJson<DateTime>(json['dateStarted']),
       dateCompleted: serializer.fromJson<DateTime?>(json['dateCompleted']),
       isFinalized: serializer.fromJson<bool>(json['isFinalized']),
@@ -1109,7 +1697,10 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'cycleId': serializer.toJson<int>(cycleId),
       'dayType': serializer.toJson<String>(dayType),
+      'rotationNumber': serializer.toJson<int>(rotationNumber),
+      'rotationPosition': serializer.toJson<int>(rotationPosition),
       'dateStarted': serializer.toJson<DateTime>(dateStarted),
       'dateCompleted': serializer.toJson<DateTime?>(dateCompleted),
       'isFinalized': serializer.toJson<bool>(isFinalized),
@@ -1119,14 +1710,20 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
 
   WorkoutSession copyWith({
     int? id,
+    int? cycleId,
     String? dayType,
+    int? rotationNumber,
+    int? rotationPosition,
     DateTime? dateStarted,
     Value<DateTime?> dateCompleted = const Value.absent(),
     bool? isFinalized,
     Value<String?> sessionNotes = const Value.absent(),
   }) => WorkoutSession(
     id: id ?? this.id,
+    cycleId: cycleId ?? this.cycleId,
     dayType: dayType ?? this.dayType,
+    rotationNumber: rotationNumber ?? this.rotationNumber,
+    rotationPosition: rotationPosition ?? this.rotationPosition,
     dateStarted: dateStarted ?? this.dateStarted,
     dateCompleted: dateCompleted.present
         ? dateCompleted.value
@@ -1137,7 +1734,14 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
   WorkoutSession copyWithCompanion(WorkoutSessionCompanion data) {
     return WorkoutSession(
       id: data.id.present ? data.id.value : this.id,
+      cycleId: data.cycleId.present ? data.cycleId.value : this.cycleId,
       dayType: data.dayType.present ? data.dayType.value : this.dayType,
+      rotationNumber: data.rotationNumber.present
+          ? data.rotationNumber.value
+          : this.rotationNumber,
+      rotationPosition: data.rotationPosition.present
+          ? data.rotationPosition.value
+          : this.rotationPosition,
       dateStarted: data.dateStarted.present
           ? data.dateStarted.value
           : this.dateStarted,
@@ -1157,7 +1761,10 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
   String toString() {
     return (StringBuffer('WorkoutSession(')
           ..write('id: $id, ')
+          ..write('cycleId: $cycleId, ')
           ..write('dayType: $dayType, ')
+          ..write('rotationNumber: $rotationNumber, ')
+          ..write('rotationPosition: $rotationPosition, ')
           ..write('dateStarted: $dateStarted, ')
           ..write('dateCompleted: $dateCompleted, ')
           ..write('isFinalized: $isFinalized, ')
@@ -1169,7 +1776,10 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
   @override
   int get hashCode => Object.hash(
     id,
+    cycleId,
     dayType,
+    rotationNumber,
+    rotationPosition,
     dateStarted,
     dateCompleted,
     isFinalized,
@@ -1180,7 +1790,10 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
       identical(this, other) ||
       (other is WorkoutSession &&
           other.id == this.id &&
+          other.cycleId == this.cycleId &&
           other.dayType == this.dayType &&
+          other.rotationNumber == this.rotationNumber &&
+          other.rotationPosition == this.rotationPosition &&
           other.dateStarted == this.dateStarted &&
           other.dateCompleted == this.dateCompleted &&
           other.isFinalized == this.isFinalized &&
@@ -1189,14 +1802,20 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
 
 class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
   final Value<int> id;
+  final Value<int> cycleId;
   final Value<String> dayType;
+  final Value<int> rotationNumber;
+  final Value<int> rotationPosition;
   final Value<DateTime> dateStarted;
   final Value<DateTime?> dateCompleted;
   final Value<bool> isFinalized;
   final Value<String?> sessionNotes;
   const WorkoutSessionCompanion({
     this.id = const Value.absent(),
+    this.cycleId = const Value.absent(),
     this.dayType = const Value.absent(),
+    this.rotationNumber = const Value.absent(),
+    this.rotationPosition = const Value.absent(),
     this.dateStarted = const Value.absent(),
     this.dateCompleted = const Value.absent(),
     this.isFinalized = const Value.absent(),
@@ -1204,16 +1823,25 @@ class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
   });
   WorkoutSessionCompanion.insert({
     this.id = const Value.absent(),
+    required int cycleId,
     required String dayType,
+    required int rotationNumber,
+    required int rotationPosition,
     required DateTime dateStarted,
     this.dateCompleted = const Value.absent(),
     this.isFinalized = const Value.absent(),
     this.sessionNotes = const Value.absent(),
-  }) : dayType = Value(dayType),
+  }) : cycleId = Value(cycleId),
+       dayType = Value(dayType),
+       rotationNumber = Value(rotationNumber),
+       rotationPosition = Value(rotationPosition),
        dateStarted = Value(dateStarted);
   static Insertable<WorkoutSession> custom({
     Expression<int>? id,
+    Expression<int>? cycleId,
     Expression<String>? dayType,
+    Expression<int>? rotationNumber,
+    Expression<int>? rotationPosition,
     Expression<DateTime>? dateStarted,
     Expression<DateTime>? dateCompleted,
     Expression<bool>? isFinalized,
@@ -1221,7 +1849,10 @@ class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (cycleId != null) 'cycle_id': cycleId,
       if (dayType != null) 'day_type': dayType,
+      if (rotationNumber != null) 'rotation_number': rotationNumber,
+      if (rotationPosition != null) 'rotation_position': rotationPosition,
       if (dateStarted != null) 'date_started': dateStarted,
       if (dateCompleted != null) 'date_completed': dateCompleted,
       if (isFinalized != null) 'is_finalized': isFinalized,
@@ -1231,7 +1862,10 @@ class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
 
   WorkoutSessionCompanion copyWith({
     Value<int>? id,
+    Value<int>? cycleId,
     Value<String>? dayType,
+    Value<int>? rotationNumber,
+    Value<int>? rotationPosition,
     Value<DateTime>? dateStarted,
     Value<DateTime?>? dateCompleted,
     Value<bool>? isFinalized,
@@ -1239,7 +1873,10 @@ class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
   }) {
     return WorkoutSessionCompanion(
       id: id ?? this.id,
+      cycleId: cycleId ?? this.cycleId,
       dayType: dayType ?? this.dayType,
+      rotationNumber: rotationNumber ?? this.rotationNumber,
+      rotationPosition: rotationPosition ?? this.rotationPosition,
       dateStarted: dateStarted ?? this.dateStarted,
       dateCompleted: dateCompleted ?? this.dateCompleted,
       isFinalized: isFinalized ?? this.isFinalized,
@@ -1253,8 +1890,17 @@ class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
+    if (cycleId.present) {
+      map['cycle_id'] = Variable<int>(cycleId.value);
+    }
     if (dayType.present) {
       map['day_type'] = Variable<String>(dayType.value);
+    }
+    if (rotationNumber.present) {
+      map['rotation_number'] = Variable<int>(rotationNumber.value);
+    }
+    if (rotationPosition.present) {
+      map['rotation_position'] = Variable<int>(rotationPosition.value);
     }
     if (dateStarted.present) {
       map['date_started'] = Variable<DateTime>(dateStarted.value);
@@ -1275,7 +1921,10 @@ class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
   String toString() {
     return (StringBuffer('WorkoutSessionCompanion(')
           ..write('id: $id, ')
+          ..write('cycleId: $cycleId, ')
           ..write('dayType: $dayType, ')
+          ..write('rotationNumber: $rotationNumber, ')
+          ..write('rotationPosition: $rotationPosition, ')
           ..write('dateStarted: $dateStarted, ')
           ..write('dateCompleted: $dateCompleted, ')
           ..write('isFinalized: $isFinalized, ')
@@ -2856,6 +3505,7 @@ class AccessoryExerciseCompanion extends UpdateCompanion<AccessoryExercise> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
+  late final $CyclesTable cycles = $CyclesTable(this);
   late final $LiftsTable lifts = $LiftsTable(this);
   late final $CycleStatesTable cycleStates = $CycleStatesTable(this);
   late final $WorkoutSessionsTable workoutSessions = $WorkoutSessionsTable(
@@ -2867,6 +3517,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $AccessoryExercisesTable accessoryExercises =
       $AccessoryExercisesTable(this);
+  late final CyclesDao cyclesDao = CyclesDao(this as AppDatabase);
   late final LiftsDao liftsDao = LiftsDao(this as AppDatabase);
   late final CycleStatesDao cycleStatesDao = CycleStatesDao(
     this as AppDatabase,
@@ -2887,6 +3538,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
+    cycles,
     lifts,
     cycleStates,
     workoutSessions,
@@ -2898,10 +3550,24 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
     WritePropagation(
       on: TableUpdateQuery.onTableName(
+        'cycles',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('cycle_states', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
         'lifts',
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('cycle_states', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'cycles',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('workout_sessions', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -2920,6 +3586,422 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   ]);
 }
 
+typedef $$CyclesTableCreateCompanionBuilder =
+    CycleCompanion Function({
+      Value<int> id,
+      required int cycleNumber,
+      required DateTime startDate,
+      Value<DateTime?> endDate,
+      required String status,
+      Value<int> completedRotations,
+    });
+typedef $$CyclesTableUpdateCompanionBuilder =
+    CycleCompanion Function({
+      Value<int> id,
+      Value<int> cycleNumber,
+      Value<DateTime> startDate,
+      Value<DateTime?> endDate,
+      Value<String> status,
+      Value<int> completedRotations,
+    });
+
+final class $$CyclesTableReferences
+    extends BaseReferences<_$AppDatabase, $CyclesTable, Cycle> {
+  $$CyclesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$CycleStatesTable, List<CycleState>>
+  _cycleStatesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.cycleStates,
+    aliasName: $_aliasNameGenerator(db.cycles.id, db.cycleStates.cycleId),
+  );
+
+  $$CycleStatesTableProcessedTableManager get cycleStatesRefs {
+    final manager = $$CycleStatesTableTableManager(
+      $_db,
+      $_db.cycleStates,
+    ).filter((f) => f.cycleId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_cycleStatesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$WorkoutSessionsTable, List<WorkoutSession>>
+  _workoutSessionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.workoutSessions,
+    aliasName: $_aliasNameGenerator(db.cycles.id, db.workoutSessions.cycleId),
+  );
+
+  $$WorkoutSessionsTableProcessedTableManager get workoutSessionsRefs {
+    final manager = $$WorkoutSessionsTableTableManager(
+      $_db,
+      $_db.workoutSessions,
+    ).filter((f) => f.cycleId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _workoutSessionsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$CyclesTableFilterComposer
+    extends Composer<_$AppDatabase, $CyclesTable> {
+  $$CyclesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cycleNumber => $composableBuilder(
+    column: $table.cycleNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get startDate => $composableBuilder(
+    column: $table.startDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get endDate => $composableBuilder(
+    column: $table.endDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get completedRotations => $composableBuilder(
+    column: $table.completedRotations,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> cycleStatesRefs(
+    Expression<bool> Function($$CycleStatesTableFilterComposer f) f,
+  ) {
+    final $$CycleStatesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.cycleStates,
+      getReferencedColumn: (t) => t.cycleId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CycleStatesTableFilterComposer(
+            $db: $db,
+            $table: $db.cycleStates,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> workoutSessionsRefs(
+    Expression<bool> Function($$WorkoutSessionsTableFilterComposer f) f,
+  ) {
+    final $$WorkoutSessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.workoutSessions,
+      getReferencedColumn: (t) => t.cycleId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WorkoutSessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.workoutSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CyclesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CyclesTable> {
+  $$CyclesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cycleNumber => $composableBuilder(
+    column: $table.cycleNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get startDate => $composableBuilder(
+    column: $table.startDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get endDate => $composableBuilder(
+    column: $table.endDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get completedRotations => $composableBuilder(
+    column: $table.completedRotations,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CyclesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CyclesTable> {
+  $$CyclesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get cycleNumber => $composableBuilder(
+    column: $table.cycleNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get startDate =>
+      $composableBuilder(column: $table.startDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get endDate =>
+      $composableBuilder(column: $table.endDate, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get completedRotations => $composableBuilder(
+    column: $table.completedRotations,
+    builder: (column) => column,
+  );
+
+  Expression<T> cycleStatesRefs<T extends Object>(
+    Expression<T> Function($$CycleStatesTableAnnotationComposer a) f,
+  ) {
+    final $$CycleStatesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.cycleStates,
+      getReferencedColumn: (t) => t.cycleId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CycleStatesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.cycleStates,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> workoutSessionsRefs<T extends Object>(
+    Expression<T> Function($$WorkoutSessionsTableAnnotationComposer a) f,
+  ) {
+    final $$WorkoutSessionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.workoutSessions,
+      getReferencedColumn: (t) => t.cycleId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WorkoutSessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.workoutSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CyclesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CyclesTable,
+          Cycle,
+          $$CyclesTableFilterComposer,
+          $$CyclesTableOrderingComposer,
+          $$CyclesTableAnnotationComposer,
+          $$CyclesTableCreateCompanionBuilder,
+          $$CyclesTableUpdateCompanionBuilder,
+          (Cycle, $$CyclesTableReferences),
+          Cycle,
+          PrefetchHooks Function({
+            bool cycleStatesRefs,
+            bool workoutSessionsRefs,
+          })
+        > {
+  $$CyclesTableTableManager(_$AppDatabase db, $CyclesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CyclesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CyclesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CyclesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> cycleNumber = const Value.absent(),
+                Value<DateTime> startDate = const Value.absent(),
+                Value<DateTime?> endDate = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<int> completedRotations = const Value.absent(),
+              }) => CycleCompanion(
+                id: id,
+                cycleNumber: cycleNumber,
+                startDate: startDate,
+                endDate: endDate,
+                status: status,
+                completedRotations: completedRotations,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int cycleNumber,
+                required DateTime startDate,
+                Value<DateTime?> endDate = const Value.absent(),
+                required String status,
+                Value<int> completedRotations = const Value.absent(),
+              }) => CycleCompanion.insert(
+                id: id,
+                cycleNumber: cycleNumber,
+                startDate: startDate,
+                endDate: endDate,
+                status: status,
+                completedRotations: completedRotations,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) =>
+                    (e.readTable(table), $$CyclesTableReferences(db, table, e)),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({cycleStatesRefs = false, workoutSessionsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (cycleStatesRefs) db.cycleStates,
+                    if (workoutSessionsRefs) db.workoutSessions,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (cycleStatesRefs)
+                        await $_getPrefetchedData<
+                          Cycle,
+                          $CyclesTable,
+                          CycleState
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CyclesTableReferences
+                              ._cycleStatesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CyclesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).cycleStatesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.cycleId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (workoutSessionsRefs)
+                        await $_getPrefetchedData<
+                          Cycle,
+                          $CyclesTable,
+                          WorkoutSession
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CyclesTableReferences
+                              ._workoutSessionsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CyclesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).workoutSessionsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.cycleId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$CyclesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CyclesTable,
+      Cycle,
+      $$CyclesTableFilterComposer,
+      $$CyclesTableOrderingComposer,
+      $$CyclesTableAnnotationComposer,
+      $$CyclesTableCreateCompanionBuilder,
+      $$CyclesTableUpdateCompanionBuilder,
+      (Cycle, $$CyclesTableReferences),
+      Cycle,
+      PrefetchHooks Function({bool cycleStatesRefs, bool workoutSessionsRefs})
+    >;
 typedef $$LiftsTableCreateCompanionBuilder =
     LiftCompanion Function({
       Value<int> id,
@@ -3265,6 +4347,7 @@ typedef $$LiftsTableProcessedTableManager =
 typedef $$CycleStatesTableCreateCompanionBuilder =
     CycleStateCompanion Function({
       Value<int> id,
+      required int cycleId,
       required int liftId,
       required String currentTier,
       required int currentStage,
@@ -3276,6 +4359,7 @@ typedef $$CycleStatesTableCreateCompanionBuilder =
 typedef $$CycleStatesTableUpdateCompanionBuilder =
     CycleStateCompanion Function({
       Value<int> id,
+      Value<int> cycleId,
       Value<int> liftId,
       Value<String> currentTier,
       Value<int> currentStage,
@@ -3288,6 +4372,24 @@ typedef $$CycleStatesTableUpdateCompanionBuilder =
 final class $$CycleStatesTableReferences
     extends BaseReferences<_$AppDatabase, $CycleStatesTable, CycleState> {
   $$CycleStatesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $CyclesTable _cycleIdTable(_$AppDatabase db) => db.cycles.createAlias(
+    $_aliasNameGenerator(db.cycleStates.cycleId, db.cycles.id),
+  );
+
+  $$CyclesTableProcessedTableManager get cycleId {
+    final $_column = $_itemColumn<int>('cycle_id')!;
+
+    final manager = $$CyclesTableTableManager(
+      $_db,
+      $_db.cycles,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_cycleIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
 
   static $LiftsTable _liftIdTable(_$AppDatabase db) => db.lifts.createAlias(
     $_aliasNameGenerator(db.cycleStates.liftId, db.lifts.id),
@@ -3351,6 +4453,29 @@ class $$CycleStatesTableFilterComposer
     column: $table.lastUpdated,
     builder: (column) => ColumnFilters(column),
   );
+
+  $$CyclesTableFilterComposer get cycleId {
+    final $$CyclesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cycleId,
+      referencedTable: $db.cycles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CyclesTableFilterComposer(
+            $db: $db,
+            $table: $db.cycles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 
   $$LiftsTableFilterComposer get liftId {
     final $$LiftsTableFilterComposer composer = $composerBuilder(
@@ -3420,6 +4545,29 @@ class $$CycleStatesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  $$CyclesTableOrderingComposer get cycleId {
+    final $$CyclesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cycleId,
+      referencedTable: $db.cycles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CyclesTableOrderingComposer(
+            $db: $db,
+            $table: $db.cycles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
   $$LiftsTableOrderingComposer get liftId {
     final $$LiftsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3486,6 +4634,29 @@ class $$CycleStatesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  $$CyclesTableAnnotationComposer get cycleId {
+    final $$CyclesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cycleId,
+      referencedTable: $db.cycles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CyclesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.cycles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
   $$LiftsTableAnnotationComposer get liftId {
     final $$LiftsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -3523,7 +4694,7 @@ class $$CycleStatesTableTableManager
           $$CycleStatesTableUpdateCompanionBuilder,
           (CycleState, $$CycleStatesTableReferences),
           CycleState,
-          PrefetchHooks Function({bool liftId})
+          PrefetchHooks Function({bool cycleId, bool liftId})
         > {
   $$CycleStatesTableTableManager(_$AppDatabase db, $CycleStatesTable table)
     : super(
@@ -3539,6 +4710,7 @@ class $$CycleStatesTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<int> cycleId = const Value.absent(),
                 Value<int> liftId = const Value.absent(),
                 Value<String> currentTier = const Value.absent(),
                 Value<int> currentStage = const Value.absent(),
@@ -3548,6 +4720,7 @@ class $$CycleStatesTableTableManager
                 Value<DateTime> lastUpdated = const Value.absent(),
               }) => CycleStateCompanion(
                 id: id,
+                cycleId: cycleId,
                 liftId: liftId,
                 currentTier: currentTier,
                 currentStage: currentStage,
@@ -3559,6 +4732,7 @@ class $$CycleStatesTableTableManager
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                required int cycleId,
                 required int liftId,
                 required String currentTier,
                 required int currentStage,
@@ -3568,6 +4742,7 @@ class $$CycleStatesTableTableManager
                 Value<DateTime> lastUpdated = const Value.absent(),
               }) => CycleStateCompanion.insert(
                 id: id,
+                cycleId: cycleId,
                 liftId: liftId,
                 currentTier: currentTier,
                 currentStage: currentStage,
@@ -3584,7 +4759,7 @@ class $$CycleStatesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({liftId = false}) {
+          prefetchHooksCallback: ({cycleId = false, liftId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -3604,6 +4779,19 @@ class $$CycleStatesTableTableManager
                       dynamic
                     >
                   >(state) {
+                    if (cycleId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.cycleId,
+                                referencedTable: $$CycleStatesTableReferences
+                                    ._cycleIdTable(db),
+                                referencedColumn: $$CycleStatesTableReferences
+                                    ._cycleIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
                     if (liftId) {
                       state =
                           state.withJoin(
@@ -3641,12 +4829,15 @@ typedef $$CycleStatesTableProcessedTableManager =
       $$CycleStatesTableUpdateCompanionBuilder,
       (CycleState, $$CycleStatesTableReferences),
       CycleState,
-      PrefetchHooks Function({bool liftId})
+      PrefetchHooks Function({bool cycleId, bool liftId})
     >;
 typedef $$WorkoutSessionsTableCreateCompanionBuilder =
     WorkoutSessionCompanion Function({
       Value<int> id,
+      required int cycleId,
       required String dayType,
+      required int rotationNumber,
+      required int rotationPosition,
       required DateTime dateStarted,
       Value<DateTime?> dateCompleted,
       Value<bool> isFinalized,
@@ -3655,7 +4846,10 @@ typedef $$WorkoutSessionsTableCreateCompanionBuilder =
 typedef $$WorkoutSessionsTableUpdateCompanionBuilder =
     WorkoutSessionCompanion Function({
       Value<int> id,
+      Value<int> cycleId,
       Value<String> dayType,
+      Value<int> rotationNumber,
+      Value<int> rotationPosition,
       Value<DateTime> dateStarted,
       Value<DateTime?> dateCompleted,
       Value<bool> isFinalized,
@@ -3670,6 +4864,24 @@ final class $$WorkoutSessionsTableReferences
     super.$_table,
     super.$_typedResult,
   );
+
+  static $CyclesTable _cycleIdTable(_$AppDatabase db) => db.cycles.createAlias(
+    $_aliasNameGenerator(db.workoutSessions.cycleId, db.cycles.id),
+  );
+
+  $$CyclesTableProcessedTableManager get cycleId {
+    final $_column = $_itemColumn<int>('cycle_id')!;
+
+    final manager = $$CyclesTableTableManager(
+      $_db,
+      $_db.cycles,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_cycleIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
 
   static MultiTypedResultKey<$WorkoutSetsTable, List<WorkoutSet>>
   _workoutSetsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
@@ -3712,6 +4924,16 @@ class $$WorkoutSessionsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get rotationNumber => $composableBuilder(
+    column: $table.rotationNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rotationPosition => $composableBuilder(
+    column: $table.rotationPosition,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<DateTime> get dateStarted => $composableBuilder(
     column: $table.dateStarted,
     builder: (column) => ColumnFilters(column),
@@ -3731,6 +4953,29 @@ class $$WorkoutSessionsTableFilterComposer
     column: $table.sessionNotes,
     builder: (column) => ColumnFilters(column),
   );
+
+  $$CyclesTableFilterComposer get cycleId {
+    final $$CyclesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cycleId,
+      referencedTable: $db.cycles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CyclesTableFilterComposer(
+            $db: $db,
+            $table: $db.cycles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 
   Expression<bool> workoutSetsRefs(
     Expression<bool> Function($$WorkoutSetsTableFilterComposer f) f,
@@ -3777,6 +5022,16 @@ class $$WorkoutSessionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get rotationNumber => $composableBuilder(
+    column: $table.rotationNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rotationPosition => $composableBuilder(
+    column: $table.rotationPosition,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get dateStarted => $composableBuilder(
     column: $table.dateStarted,
     builder: (column) => ColumnOrderings(column),
@@ -3796,6 +5051,29 @@ class $$WorkoutSessionsTableOrderingComposer
     column: $table.sessionNotes,
     builder: (column) => ColumnOrderings(column),
   );
+
+  $$CyclesTableOrderingComposer get cycleId {
+    final $$CyclesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cycleId,
+      referencedTable: $db.cycles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CyclesTableOrderingComposer(
+            $db: $db,
+            $table: $db.cycles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$WorkoutSessionsTableAnnotationComposer
@@ -3812,6 +5090,16 @@ class $$WorkoutSessionsTableAnnotationComposer
 
   GeneratedColumn<String> get dayType =>
       $composableBuilder(column: $table.dayType, builder: (column) => column);
+
+  GeneratedColumn<int> get rotationNumber => $composableBuilder(
+    column: $table.rotationNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get rotationPosition => $composableBuilder(
+    column: $table.rotationPosition,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get dateStarted => $composableBuilder(
     column: $table.dateStarted,
@@ -3832,6 +5120,29 @@ class $$WorkoutSessionsTableAnnotationComposer
     column: $table.sessionNotes,
     builder: (column) => column,
   );
+
+  $$CyclesTableAnnotationComposer get cycleId {
+    final $$CyclesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cycleId,
+      referencedTable: $db.cycles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CyclesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.cycles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 
   Expression<T> workoutSetsRefs<T extends Object>(
     Expression<T> Function($$WorkoutSetsTableAnnotationComposer a) f,
@@ -3872,7 +5183,7 @@ class $$WorkoutSessionsTableTableManager
           $$WorkoutSessionsTableUpdateCompanionBuilder,
           (WorkoutSession, $$WorkoutSessionsTableReferences),
           WorkoutSession,
-          PrefetchHooks Function({bool workoutSetsRefs})
+          PrefetchHooks Function({bool cycleId, bool workoutSetsRefs})
         > {
   $$WorkoutSessionsTableTableManager(
     _$AppDatabase db,
@@ -3890,14 +5201,20 @@ class $$WorkoutSessionsTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<int> cycleId = const Value.absent(),
                 Value<String> dayType = const Value.absent(),
+                Value<int> rotationNumber = const Value.absent(),
+                Value<int> rotationPosition = const Value.absent(),
                 Value<DateTime> dateStarted = const Value.absent(),
                 Value<DateTime?> dateCompleted = const Value.absent(),
                 Value<bool> isFinalized = const Value.absent(),
                 Value<String?> sessionNotes = const Value.absent(),
               }) => WorkoutSessionCompanion(
                 id: id,
+                cycleId: cycleId,
                 dayType: dayType,
+                rotationNumber: rotationNumber,
+                rotationPosition: rotationPosition,
                 dateStarted: dateStarted,
                 dateCompleted: dateCompleted,
                 isFinalized: isFinalized,
@@ -3906,14 +5223,20 @@ class $$WorkoutSessionsTableTableManager
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                required int cycleId,
                 required String dayType,
+                required int rotationNumber,
+                required int rotationPosition,
                 required DateTime dateStarted,
                 Value<DateTime?> dateCompleted = const Value.absent(),
                 Value<bool> isFinalized = const Value.absent(),
                 Value<String?> sessionNotes = const Value.absent(),
               }) => WorkoutSessionCompanion.insert(
                 id: id,
+                cycleId: cycleId,
                 dayType: dayType,
+                rotationNumber: rotationNumber,
+                rotationPosition: rotationPosition,
                 dateStarted: dateStarted,
                 dateCompleted: dateCompleted,
                 isFinalized: isFinalized,
@@ -3927,11 +5250,44 @@ class $$WorkoutSessionsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({workoutSetsRefs = false}) {
+          prefetchHooksCallback: ({cycleId = false, workoutSetsRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [if (workoutSetsRefs) db.workoutSets],
-              addJoins: null,
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (cycleId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.cycleId,
+                                referencedTable:
+                                    $$WorkoutSessionsTableReferences
+                                        ._cycleIdTable(db),
+                                referencedColumn:
+                                    $$WorkoutSessionsTableReferences
+                                        ._cycleIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (workoutSetsRefs)
@@ -3973,7 +5329,7 @@ typedef $$WorkoutSessionsTableProcessedTableManager =
       $$WorkoutSessionsTableUpdateCompanionBuilder,
       (WorkoutSession, $$WorkoutSessionsTableReferences),
       WorkoutSession,
-      PrefetchHooks Function({bool workoutSetsRefs})
+      PrefetchHooks Function({bool cycleId, bool workoutSetsRefs})
     >;
 typedef $$WorkoutSetsTableCreateCompanionBuilder =
     WorkoutSetCompanion Function({
@@ -4962,6 +6318,8 @@ typedef $$AccessoryExercisesTableProcessedTableManager =
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
+  $$CyclesTableTableManager get cycles =>
+      $$CyclesTableTableManager(_db, _db.cycles);
   $$LiftsTableTableManager get lifts =>
       $$LiftsTableTableManager(_db, _db.lifts);
   $$CycleStatesTableTableManager get cycleStates =>
@@ -4976,17 +6334,23 @@ class $AppDatabaseManager {
       $$AccessoryExercisesTableTableManager(_db, _db.accessoryExercises);
 }
 
+mixin _$CyclesDaoMixin on DatabaseAccessor<AppDatabase> {
+  $CyclesTable get cycles => attachedDatabase.cycles;
+}
 mixin _$LiftsDaoMixin on DatabaseAccessor<AppDatabase> {
   $LiftsTable get lifts => attachedDatabase.lifts;
 }
 mixin _$CycleStatesDaoMixin on DatabaseAccessor<AppDatabase> {
+  $CyclesTable get cycles => attachedDatabase.cycles;
   $LiftsTable get lifts => attachedDatabase.lifts;
   $CycleStatesTable get cycleStates => attachedDatabase.cycleStates;
 }
 mixin _$WorkoutSessionsDaoMixin on DatabaseAccessor<AppDatabase> {
+  $CyclesTable get cycles => attachedDatabase.cycles;
   $WorkoutSessionsTable get workoutSessions => attachedDatabase.workoutSessions;
 }
 mixin _$WorkoutSetsDaoMixin on DatabaseAccessor<AppDatabase> {
+  $CyclesTable get cycles => attachedDatabase.cycles;
   $WorkoutSessionsTable get workoutSessions => attachedDatabase.workoutSessions;
   $LiftsTable get lifts => attachedDatabase.lifts;
   $WorkoutSetsTable get workoutSets => attachedDatabase.workoutSets;

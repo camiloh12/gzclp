@@ -204,6 +204,7 @@ class _DashboardPageState extends State<DashboardPage> {
       (cs) => cs.liftId == lift.id && cs.currentTier == 'T1',
       orElse: () => CycleState(
         id: 0,
+        cycleId: 1, // Default to cycle 1
         liftId: lift.id,
         currentTier: 'T1',
         currentStage: 1,
@@ -218,6 +219,7 @@ class _DashboardPageState extends State<DashboardPage> {
       (cs) => cs.liftId == lift.id && cs.currentTier == 'T2',
       orElse: () => CycleState(
         id: 0,
+        cycleId: 1, // Default to cycle 1
         liftId: lift.id,
         currentTier: 'T2',
         currentStage: 1,

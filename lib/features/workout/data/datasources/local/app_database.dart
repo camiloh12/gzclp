@@ -14,6 +14,7 @@ part 'app_database.g.dart';
 /// and includes comprehensive DAOs for each table.
 @DriftDatabase(
   tables: [
+    Cycles,
     Lifts,
     CycleStates,
     WorkoutSessions,
@@ -22,6 +23,7 @@ part 'app_database.g.dart';
     AccessoryExercises,
   ],
   daos: [
+    CyclesDao,
     LiftsDao,
     CycleStatesDao,
     WorkoutSessionsDao,
@@ -38,7 +40,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -57,6 +59,59 @@ class AppDatabase extends _$AppDatabase {
         if (from < 3) {
           await _createIndexes();
         }
+        // Migration from version 3 to 4: Add Cycles table and cycle tracking
+        if (from < 4) {
+          // Create Cycles table
+          await m.createTable(cycles);
+
+          // Add cycle_id to CycleStates
+          await m.addColumn(cycleStates, cycleStates.cycleId);
+
+          // Add cycle_id and rotation tracking to WorkoutSessions
+          await m.addColumn(workoutSessions, workoutSessions.cycleId);
+          await m.addColumn(workoutSessions, workoutSessions.rotationNumber);
+          await m.addColumn(workoutSessions, workoutSessions.rotationPosition);
+
+          // Create initial cycle if data exists
+          final liftsExist = await (selectOnly(lifts)..addColumns([lifts.id.count()])).getSingle();
+          final count = liftsExist.read(lifts.id.count()) ?? 0;
+
+          if (count > 0) {
+            // Create first cycle
+            final cycleId = await into(cycles).insert(
+              CycleCompanion.insert(
+                cycleNumber: 1,
+                startDate: DateTime.now(),
+                status: 'active',
+              ),
+            );
+
+            // Update existing CycleStates to link to first cycle
+            await customStatement(
+              'UPDATE cycle_states SET cycle_id = ?',
+              [cycleId],
+            );
+
+            // Update existing WorkoutSessions to link to first cycle
+            // Set rotation info based on session order
+            final sessions = await (select(workoutSessions)
+              ..orderBy([(t) => OrderingTerm.asc(t.dateStarted)]))
+              .get();
+
+            for (var i = 0; i < sessions.length; i++) {
+              final dayTypeToPosition = {'A': 1, 'B': 2, 'C': 3, 'D': 4};
+              final position = dayTypeToPosition[sessions[i].dayType] ?? 1;
+              final rotation = (i ~/ 4) + 1; // Integer division to get rotation number
+
+              await (update(workoutSessions)..where((t) => t.id.equals(sessions[i].id)))
+                .write(WorkoutSessionCompanion(
+                  cycleId: Value(cycleId),
+                  rotationNumber: Value(rotation),
+                  rotationPosition: Value(position),
+                ));
+            }
+          }
+        }
       },
       beforeOpen: (details) async {
         // Enable foreign key constraints
@@ -67,6 +122,12 @@ class AppDatabase extends _$AppDatabase {
 
   /// Create database indexes for improved query performance
   Future<void> _createIndexes() async {
+    // Index for finding active cycle
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_cycles_status '
+      'ON cycles(status)',
+    );
+
     // Index for finding in-progress sessions (CheckInProgressWorkout query)
     await customStatement(
       'CREATE INDEX IF NOT EXISTS idx_workout_sessions_is_finalized '
@@ -77,6 +138,12 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(
       'CREATE INDEX IF NOT EXISTS idx_workout_sessions_date_started '
       'ON workout_sessions(date_started DESC)',
+    );
+
+    // Index for finding sessions by cycle (used for cycle progress tracking)
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_workout_sessions_cycle_id '
+      'ON workout_sessions(cycle_id)',
     );
 
     // Index for finding sets by session (very common query)
@@ -95,6 +162,12 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(
       'CREATE INDEX IF NOT EXISTS idx_cycle_states_lift_id '
       'ON cycle_states(lift_id)',
+    );
+
+    // Index for finding cycle states by cycle (used for cycle transitions)
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_cycle_states_cycle_id '
+      'ON cycle_states(cycle_id)',
     );
 
     // Index for finding accessories by day type (used in workout generation)
@@ -122,6 +195,85 @@ LazyDatabase _openConnection() {
       ),
     );
   });
+}
+
+/// Data Access Object for Cycles table
+///
+/// Manages training cycles (12-week periods of progression).
+@DriftAccessor(tables: [Cycles])
+class CyclesDao extends DatabaseAccessor<AppDatabase> with _$CyclesDaoMixin {
+  CyclesDao(super.db);
+
+  /// Get all cycles, ordered by cycle number descending
+  Future<List<Cycle>> getAllCycles() {
+    return (select(cycles)..orderBy([(t) => OrderingTerm.desc(t.cycleNumber)])).get();
+  }
+
+  /// Get a cycle by ID
+  Future<Cycle?> getCycleById(int id) {
+    return (select(cycles)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+  }
+
+  /// Get a cycle by cycle number
+  Future<Cycle?> getCycleByCycleNumber(int cycleNumber) {
+    return (select(cycles)..where((tbl) => tbl.cycleNumber.equals(cycleNumber))).getSingleOrNull();
+  }
+
+  /// Get the active cycle
+  Future<Cycle?> getActiveCycle() {
+    return (select(cycles)..where((tbl) => tbl.status.equals('active'))).getSingleOrNull();
+  }
+
+  /// Get completed cycles
+  Future<List<Cycle>> getCompletedCycles() {
+    return (select(cycles)
+      ..where((tbl) => tbl.status.equals('completed'))
+      ..orderBy([(t) => OrderingTerm.desc(t.cycleNumber)]))
+        .get();
+  }
+
+  /// Insert a new cycle
+  Future<int> insertCycle(CycleCompanion cycle) {
+    return into(cycles).insert(cycle);
+  }
+
+  /// Update a cycle
+  Future<bool> updateCycle(Cycle cycle) {
+    return update(cycles).replace(cycle);
+  }
+
+  /// Complete the current cycle and update rotation count
+  Future<void> completeCycle(int cycleId, DateTime endDate) async {
+    await (update(cycles)..where((tbl) => tbl.id.equals(cycleId)))
+        .write(CycleCompanion(
+          endDate: Value(endDate),
+          status: const Value('completed'),
+        ));
+  }
+
+  /// Increment the completed rotations count for a cycle
+  Future<void> incrementRotations(int cycleId) async {
+    final cycle = await getCycleById(cycleId);
+    if (cycle != null) {
+      await (update(cycles)..where((tbl) => tbl.id.equals(cycleId)))
+          .write(CycleCompanion(
+            completedRotations: Value(cycle.completedRotations + 1),
+          ));
+    }
+  }
+
+  /// Get the highest cycle number
+  Future<int> getMaxCycleNumber() async {
+    final result = await (selectOnly(cycles)
+      ..addColumns([cycles.cycleNumber.max()]))
+        .getSingleOrNull();
+    return result?.read(cycles.cycleNumber.max()) ?? 0;
+  }
+
+  /// Delete a cycle
+  Future<int> deleteCycle(int id) {
+    return (delete(cycles)..where((tbl) => tbl.id.equals(id))).go();
+  }
 }
 
 /// Data Access Object for Lifts table
@@ -194,17 +346,26 @@ class CycleStatesDao extends DatabaseAccessor<AppDatabase> with _$CycleStatesDao
     return (select(cycleStates)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
   }
 
-  /// Get cycle state for a specific lift and tier
+  /// Get cycle state for a specific lift and tier in the active cycle
   /// This is the most commonly used query for progression logic
-  Future<CycleState?> getCycleStateByLiftAndTier(int liftId, String tier) {
+  Future<CycleState?> getCycleStateByLiftAndTier(int liftId, String tier, int cycleId) {
     return (select(cycleStates)
-      ..where((tbl) => tbl.liftId.equals(liftId) & tbl.currentTier.equals(tier)))
+      ..where((tbl) => tbl.cycleId.equals(cycleId) & tbl.liftId.equals(liftId) & tbl.currentTier.equals(tier)))
         .getSingleOrNull();
   }
 
-  /// Get all cycle states for a specific lift
-  Future<List<CycleState>> getCycleStatesForLift(int liftId) {
-    return (select(cycleStates)..where((tbl) => tbl.liftId.equals(liftId))).get();
+  /// Get all cycle states for a specific lift in a cycle
+  Future<List<CycleState>> getCycleStatesForLift(int liftId, int cycleId) {
+    return (select(cycleStates)
+      ..where((tbl) => tbl.cycleId.equals(cycleId) & tbl.liftId.equals(liftId)))
+        .get();
+  }
+
+  /// Get all cycle states for a specific cycle
+  Future<List<CycleState>> getCycleStatesForCycle(int cycleId) {
+    return (select(cycleStates)
+      ..where((tbl) => tbl.cycleId.equals(cycleId)))
+        .get();
   }
 
   /// Insert a new cycle state
@@ -303,6 +464,23 @@ class WorkoutSessionsDao extends DatabaseAccessor<AppDatabase> with _$WorkoutSes
       ..where((tbl) => tbl.isFinalized.equals(true))
       ..orderBy([(t) => OrderingTerm.desc(t.dateStarted)]))
         .get();
+  }
+
+  /// Get sessions for a specific cycle
+  Future<List<WorkoutSession>> getSessionsForCycle(int cycleId) {
+    return (select(workoutSessions)
+      ..where((tbl) => tbl.cycleId.equals(cycleId))
+      ..orderBy([(t) => OrderingTerm.asc(t.dateStarted)]))
+        .get();
+  }
+
+  /// Get the last finalized session for a specific cycle
+  Future<WorkoutSession?> getLastFinalizedSessionForCycle(int cycleId) {
+    return (select(workoutSessions)
+      ..where((tbl) => tbl.cycleId.equals(cycleId) & tbl.isFinalized.equals(true))
+      ..orderBy([(t) => OrderingTerm.desc(t.dateStarted)])
+      ..limit(1))
+        .getSingleOrNull();
   }
 
   /// Insert a new workout session

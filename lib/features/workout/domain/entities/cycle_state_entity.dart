@@ -11,6 +11,9 @@ class CycleStateEntity extends Equatable {
   /// Unique identifier
   final int id;
 
+  /// ID of the cycle this state belongs to
+  final int cycleId;
+
   /// ID of the lift this state belongs to
   final int liftId;
 
@@ -41,6 +44,7 @@ class CycleStateEntity extends Equatable {
 
   const CycleStateEntity({
     required this.id,
+    required this.cycleId,
     required this.liftId,
     required this.currentTier,
     required this.currentStage,
@@ -102,6 +106,7 @@ class CycleStateEntity extends Equatable {
   /// Create a copy with updated fields
   CycleStateEntity copyWith({
     int? id,
+    int? cycleId,
     int? liftId,
     String? currentTier,
     int? currentStage,
@@ -112,6 +117,7 @@ class CycleStateEntity extends Equatable {
   }) {
     return CycleStateEntity(
       id: id ?? this.id,
+      cycleId: cycleId ?? this.cycleId,
       liftId: liftId ?? this.liftId,
       currentTier: currentTier ?? this.currentTier,
       currentStage: currentStage ?? this.currentStage,
@@ -125,6 +131,7 @@ class CycleStateEntity extends Equatable {
   @override
   List<Object?> get props => [
         id,
+        cycleId,
         liftId,
         currentTier,
         currentStage,

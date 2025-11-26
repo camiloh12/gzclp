@@ -2,11 +2,13 @@ import 'package:get_it/get_it.dart';
 
 import '../../features/workout/data/datasources/local/app_database.dart';
 import '../../features/workout/data/repositories/accessory_exercise_repository_impl.dart';
+import '../../features/workout/data/repositories/cycle_repository_impl.dart';
 import '../../features/workout/data/repositories/cycle_state_repository_impl.dart';
 import '../../features/workout/data/repositories/lift_repository_impl.dart';
 import '../../features/workout/data/repositories/workout_session_repository_impl.dart';
 import '../../features/workout/data/repositories/workout_set_repository_impl.dart';
 import '../../features/workout/domain/repositories/accessory_exercise_repository.dart';
+import '../../features/workout/domain/repositories/cycle_repository.dart';
 import '../../features/workout/domain/repositories/cycle_state_repository.dart';
 import '../../features/workout/domain/repositories/lift_repository.dart';
 import '../../features/workout/domain/repositories/workout_session_repository.dart';
@@ -18,6 +20,7 @@ import '../../features/workout/domain/usecases/export_database.dart';
 import '../../features/workout/domain/usecases/finalize_workout_session.dart';
 import '../../features/workout/domain/usecases/generate_workout_for_day.dart';
 import '../../features/workout/domain/usecases/import_database.dart';
+import '../../features/workout/domain/usecases/start_new_cycle.dart';
 import '../../features/workout/domain/services/progression_service.dart';
 import '../../features/workout/presentation/bloc/onboarding/onboarding_bloc.dart'
     as features;
@@ -52,6 +55,10 @@ Future<void> init() async {
   //! Phase 2: Repositories
   sl.registerLazySingleton<LiftRepository>(
     () => LiftRepositoryImpl(sl()),
+  );
+
+  sl.registerLazySingleton<CycleRepository>(
+    () => CycleRepositoryImpl(sl()),
   );
 
   sl.registerLazySingleton<CycleStateRepository>(
@@ -102,6 +109,15 @@ Future<void> init() async {
     ),
   );
 
+  //! Phase 2.5: Cycle Management
+  sl.registerLazySingleton(
+    () => StartNewCycle(
+      cycleRepository: sl(),
+      cycleStateRepository: sl(),
+      liftRepository: sl(),
+    ),
+  );
+
   //! Phase 8: Data Management
   sl.registerLazySingleton(() => ExportDatabase());
   sl.registerLazySingleton(() => ImportDatabase());
@@ -114,6 +130,7 @@ Future<void> init() async {
   sl.registerFactory(
     () => features.OnboardingBloc(
       liftRepository: sl(),
+      cycleRepository: sl(),
       cycleStateRepository: sl(),
       accessoryExerciseRepository: sl(),
       database: sl(),
@@ -130,6 +147,7 @@ Future<void> init() async {
   // Active Workout BLoC
   sl.registerFactory(
     () => features.ActiveWorkoutBloc(
+      cycleRepository: sl(),
       sessionRepository: sl(),
       setRepository: sl(),
       finalizeWorkoutSession: sl(),

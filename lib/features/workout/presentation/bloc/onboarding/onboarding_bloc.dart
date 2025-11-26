@@ -4,6 +4,7 @@ import '../../../../../core/constants/app_constants.dart';
 import '../../../data/datasources/local/app_database.dart';
 import '../../../domain/entities/accessory_exercise_entity.dart';
 import '../../../domain/repositories/accessory_exercise_repository.dart';
+import '../../../domain/repositories/cycle_repository.dart';
 import '../../../domain/repositories/cycle_state_repository.dart';
 import '../../../domain/repositories/lift_repository.dart';
 import 'onboarding_event.dart';
@@ -19,12 +20,14 @@ import 'onboarding_state.dart';
 /// - Saving preferences and cycle states
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   final LiftRepository liftRepository;
+  final CycleRepository cycleRepository;
   final CycleStateRepository cycleStateRepository;
   final AccessoryExerciseRepository accessoryExerciseRepository;
   final AppDatabase database;
 
   OnboardingBloc({
     required this.liftRepository,
+    required this.cycleRepository,
     required this.cycleStateRepository,
     required this.accessoryExerciseRepository,
     required this.database,
@@ -182,6 +185,15 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     emit(const OnboardingCompleting());
 
     try {
+      // First, create the initial cycle
+      print('[OnboardingBloc] Creating initial cycle');
+      final cycleResult = await cycleRepository.createCycle(1, DateTime.now());
+      if (cycleResult.isLeft()) {
+        print('[OnboardingBloc] ERROR: Failed to create initial cycle');
+        emit(const OnboardingError('Failed to create initial cycle'));
+        return;
+      }
+
       print('[OnboardingBloc] Initializing cycle states for ${enteredWeights.length} lifts');
       // Save cycle states for each lift
       for (final weights in enteredWeights.values) {

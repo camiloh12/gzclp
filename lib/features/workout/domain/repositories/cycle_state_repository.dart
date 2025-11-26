@@ -24,8 +24,22 @@ abstract class CycleStateRepository {
   /// Get all cycle states for a specific lift
   Future<Either<Failure, List<CycleStateEntity>>> getCycleStatesForLift(int liftId);
 
-  /// Create a new cycle state
+  /// Get all cycle states for a specific cycle
+  Future<Either<Failure, List<CycleStateEntity>>> getCycleStatesForCycle(int cycleId);
+
+  /// Create a new cycle state from entity
   Future<Either<Failure, int>> createCycleState(CycleStateEntity state);
+
+  /// Create a new cycle state with individual parameters (convenience method)
+  Future<Either<Failure, int>> createCycleStateFromParams({
+    required int cycleId,
+    required int liftId,
+    required String tier,
+    required int stage,
+    required double nextTargetWeight,
+    double? lastStage1SuccessWeight,
+    int currentT3AmrapVolume = 0,
+  });
 
   /// Update an existing cycle state
   Future<Either<Failure, void>> updateCycleState(CycleStateEntity state);
