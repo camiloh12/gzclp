@@ -6,7 +6,8 @@
       "Bash(timeout 60 flutter run:*)",
       "Bash(flutter run:*)",
       "Bash(taskkill:*)",
-      "Bash(flutter test:*)"
+      "Bash(flutter test:*)",
+      "Bash(nc:*)"
     ],
     "deny": [],
     "ask": []
