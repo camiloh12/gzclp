@@ -358,6 +358,49 @@ dart run build_runner build --delete-conflicting-outputs
 dart run build_runner watch
 ```
 
+### Web Deployment with Proper Persistence
+
+**IMPORTANT:** For database persistence to work correctly on web, the server must send specific security headers to enable SharedArrayBuffers. Without these headers, the browser will use a fallback storage mode that has persistence issues.
+
+#### Development (with persistence):
+```bash
+# 1. Build the web app
+flutter build web
+
+# 2. Run the custom server (includes required headers)
+dart run web_server.dart
+
+# 3. Open browser to http://localhost:8080
+```
+
+The custom server (`web_server.dart`) sends these required headers:
+- `Cross-Origin-Opener-Policy: same-origin`
+- `Cross-Origin-Embedder-Policy: require-corp`
+
+#### Production Deployment:
+
+Configure your web server (nginx, Apache, Firebase Hosting, etc.) to send the above headers. Example for nginx:
+
+```nginx
+add_header Cross-Origin-Opener-Policy same-origin;
+add_header Cross-Origin-Embedder-Policy require-corp;
+```
+
+#### Why This Matters:
+
+Without these headers:
+- Browser blocks SharedArrayBuffers for security (Spectre/Meltdown protection)
+- Drift falls back to `sharedIndexedDb` storage mode
+- This fallback has a known bug where writes don't persist after browser restart
+- Workouts will appear to save during the session but disappear after closing the tab
+
+With the headers:
+- SharedArrayBuffers enabled
+- Drift uses proper `opfsShared` or worker-based storage
+- Full database persistence works correctly ✅
+
+**For most reliable experience, use the mobile app** where native SQLite works perfectly without any special configuration.
+
 ### Testing Requirements (Linux)
 
 For running database tests on Linux, the SQLite library must be available. If tests fail with `libsqlite3.so: cannot open shared object file`:

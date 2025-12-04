@@ -61,6 +61,7 @@ class ImportDatabase {
           await _database.cycleStatesDao.updateCycleState(
             CycleState(
               id: cs['id'] as int,
+              cycleId: cs['cycleId'] as int? ?? 1, // Default to cycle 1 for old data
               liftId: cs['liftId'] as int,
               currentTier: cs['currentTier'] as String,
               currentStage: cs['currentStage'] as int,
@@ -98,7 +99,10 @@ class ImportDatabase {
 
           final newId = await _database.into(_database.workoutSessions).insert(
             WorkoutSessionCompanion.insert(
+              cycleId: session['cycleId'] as int? ?? 1, // Default to cycle 1 for old data
               dayType: session['dayType'] as String,
+              rotationNumber: session['rotationNumber'] as int? ?? 1, // Default values for old data
+              rotationPosition: session['rotationPosition'] as int? ?? 1,
               dateStarted: DateTime.parse(session['dateStarted'] as String),
               dateCompleted: session['dateCompleted'] != null
                   ? drift.Value(DateTime.parse(session['dateCompleted'] as String))

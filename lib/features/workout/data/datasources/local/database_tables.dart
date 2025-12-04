@@ -1,5 +1,33 @@
 import 'package:drift/drift.dart';
 
+/// Cycles table - Tracks 12-week training cycles
+///
+/// A cycle represents a 12-week (12 complete A→B→C→D rotations) training period.
+/// When a cycle completes, the user can start a new cycle with adjusted weights
+/// based on their progress in the previous cycle.
+@DataClassName('Cycle')
+class Cycles extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// Cycle number (1, 2, 3, etc.)
+  /// First cycle is 1, increments with each new cycle
+  IntColumn get cycleNumber => integer().unique()();
+
+  /// When this cycle started
+  DateTimeColumn get startDate => dateTime()();
+
+  /// When this cycle ended (null if still active)
+  DateTimeColumn get endDate => dateTime().nullable()();
+
+  /// Status: 'active' or 'completed'
+  /// Only one cycle can be active at a time
+  TextColumn get status => text().withLength(min: 6, max: 9)();
+
+  /// Number of complete A→B→C→D rotations completed in this cycle
+  /// Cycle completes when this reaches 12
+  IntColumn get completedRotations => integer().withDefault(const Constant(0))();
+}
+
 /// Lifts table - Stores the four main compound lifts
 ///
 /// Each lift has a category (lower/upper) which determines
@@ -25,6 +53,10 @@ class Lifts extends Table {
 @DataClassName('CycleState')
 class CycleStates extends Table {
   IntColumn get id => integer().autoIncrement()();
+
+  /// Foreign key to Cycles table
+  /// Links this progression state to a specific training cycle
+  IntColumn get cycleId => integer().references(Cycles, #id, onDelete: KeyAction.cascade)();
 
   /// Foreign key to Lifts table
   IntColumn get liftId => integer().references(Lifts, #id, onDelete: KeyAction.cascade)();
@@ -58,7 +90,7 @@ class CycleStates extends Table {
 
   @override
   List<Set<Column>> get uniqueKeys => [
-    {liftId, currentTier}, // Each lift can only have one state per tier
+    {cycleId, liftId, currentTier}, // Each lift can only have one state per tier per cycle
   ];
 }
 
@@ -70,9 +102,21 @@ class CycleStates extends Table {
 class WorkoutSessions extends Table {
   IntColumn get id => integer().autoIncrement()();
 
+  /// Foreign key to Cycles table
+  /// Links this session to a specific training cycle
+  IntColumn get cycleId => integer().references(Cycles, #id, onDelete: KeyAction.cascade)();
+
   /// Day type: 'A', 'B', 'C', or 'D'
   /// Determines which lifts are performed
   TextColumn get dayType => text().withLength(min: 1, max: 1)();
+
+  /// Which rotation number this session belongs to (1-12)
+  /// Used to track progress toward cycle completion
+  IntColumn get rotationNumber => integer()();
+
+  /// Position within the rotation (1-4 for A, B, C, D)
+  /// A=1, B=2, C=3, D=4
+  IntColumn get rotationPosition => integer()();
 
   /// When the workout was started
   DateTimeColumn get dateStarted => dateTime()();

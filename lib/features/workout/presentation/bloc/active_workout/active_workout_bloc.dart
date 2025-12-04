@@ -4,6 +4,7 @@ import '../../../../../core/constants/app_constants.dart';
 import '../../../data/datasources/local/app_database.dart';
 import '../../../domain/entities/workout_session_entity.dart';
 import '../../../domain/entities/workout_set_entity.dart';
+import '../../../domain/repositories/cycle_repository.dart';
 import '../../../domain/repositories/workout_session_repository.dart';
 import '../../../domain/repositories/workout_set_repository.dart';
 import '../../../domain/usecases/finalize_workout_session.dart';
@@ -12,6 +13,7 @@ import 'active_workout_event.dart';
 import 'active_workout_state.dart';
 
 class ActiveWorkoutBloc extends Bloc<ActiveWorkoutEvent, ActiveWorkoutState> {
+  final CycleRepository cycleRepository;
   final WorkoutSessionRepository sessionRepository;
   final WorkoutSetRepository setRepository;
   final FinalizeWorkoutSession finalizeWorkoutSession;
@@ -19,6 +21,7 @@ class ActiveWorkoutBloc extends Bloc<ActiveWorkoutEvent, ActiveWorkoutState> {
   final AppDatabase database;
 
   ActiveWorkoutBloc({
+    required this.cycleRepository,
     required this.sessionRepository,
     required this.setRepository,
     required this.finalizeWorkoutSession,
@@ -76,10 +79,45 @@ class ActiveWorkoutBloc extends Bloc<ActiveWorkoutEvent, ActiveWorkoutState> {
       await planResult.fold(
         (failure) async => emit(ActiveWorkoutError(failure.message)),
         (plan) async {
+          // Get active cycle
+          final cycleResult = await cycleRepository.getActiveCycle();
+          if (cycleResult.isLeft()) {
+            emit(ActiveWorkoutError('No active cycle found'));
+            return;
+          }
+          final activeCycle = cycleResult.getOrElse(() => throw Exception());
+
+          // Get last session to determine next rotation
+          final lastSessionResult = await sessionRepository.getLastFinalizedSession();
+          final int rotationNumber;
+          final int rotationPosition;
+
+          if (lastSessionResult.isLeft() || lastSessionResult.getOrElse(() => null) == null) {
+            // First session of the cycle
+            rotationNumber = 1;
+            rotationPosition = 1;
+          } else {
+            final lastSession = lastSessionResult.getOrElse(() => throw Exception())!;
+
+            // Calculate next position
+            if (lastSession.rotationPosition == 4) {
+              // Completed a rotation, start new one
+              rotationNumber = lastSession.rotationNumber + 1;
+              rotationPosition = 1;
+            } else {
+              // Continue in current rotation
+              rotationNumber = lastSession.rotationNumber;
+              rotationPosition = lastSession.rotationPosition + 1;
+            }
+          }
+
           // Create session
           final session = WorkoutSessionEntity(
             id: 0, // Will be set by database
+            cycleId: activeCycle.id,
             dayType: event.dayType,
+            rotationNumber: rotationNumber,
+            rotationPosition: rotationPosition,
             dateStarted: DateTime.now(),
             dateCompleted: null,
             isFinalized: false,

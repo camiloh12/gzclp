@@ -44,11 +44,16 @@ class _OnboardingT3StepState extends State<OnboardingT3Step> {
       'D': TextEditingController(text: _selectedExercises['D'] ?? ''),
     };
 
-    // Listen to text changes
+    // Listen to text changes (use post-frame callback to avoid setState during build)
     _controllers.forEach((dayType, controller) {
       controller.addListener(() {
-        setState(() {
-          _selectedExercises[dayType] = controller.text;
+        // Defer setState to after the current build phase completes
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {
+              _selectedExercises[dayType] = controller.text;
+            });
+          }
         });
       });
     });

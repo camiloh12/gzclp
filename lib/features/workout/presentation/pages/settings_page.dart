@@ -4,7 +4,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/usecases/usecase.dart';
 import '../../data/datasources/local/app_database.dart';
+import '../../domain/usecases/start_new_cycle.dart';
 
 /// Settings page for app configuration and preferences
 class SettingsPage extends StatefulWidget {
@@ -16,8 +18,10 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   final _database = sl<AppDatabase>();
+  final _startNewCycle = sl<StartNewCycle>();
   bool _isLoading = true;
   UserPreference? _preferences;
+  Cycle? _activeCycle;
   String _appVersion = 'Loading...';
 
   @override
@@ -31,8 +35,18 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() => _isLoading = true);
     try {
       final prefs = await _database.userPreferencesDao.getPreferences();
+
+      // Try to get active cycle, but don't fail if it doesn't exist
+      Cycle? activeCycle;
+      try {
+        activeCycle = await _database.cyclesDao.getActiveCycle();
+      } catch (e) {
+        activeCycle = null;
+      }
+
       setState(() {
         _preferences = prefs;
+        _activeCycle = activeCycle;
         _isLoading = false;
       });
     } catch (e) {
@@ -168,6 +182,20 @@ class _SettingsPageState extends State<SettingsPage> {
                     _buildRestTimeTile('T2', _preferences!.t2RestSeconds, Colors.blue),
                     _buildRestTimeTile('T3', _preferences!.t3RestSeconds, Colors.green),
                     const Divider(),
+
+                    // Cycle Management
+                    if (_activeCycle != null) ...[
+                      _buildSectionHeader('Cycle Management'),
+                      _buildCycleInfo(),
+                      ListTile(
+                        leading: const Icon(Icons.restart_alt, color: Colors.orange),
+                        title: const Text('End Current Cycle'),
+                        subtitle: const Text('Start a new cycle with 90% deload'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: _confirmEndCycle,
+                      ),
+                      const Divider(),
+                    ],
 
                     // Data Management
                     _buildSectionHeader('Data Management'),
@@ -370,6 +398,120 @@ class _SettingsPageState extends State<SettingsPage> {
     if (confirmed == true) {
       // TODO: Implement data clearing logic
       _showComingSoon('Clear All Data');
+    }
+  }
+
+  Widget _buildCycleInfo() {
+    if (_activeCycle == null) return const SizedBox.shrink();
+
+    final cycle = _activeCycle!;
+    final progressPercentage = ((cycle.completedRotations / 12.0) * 100).clamp(0.0, 100.0);
+
+    return ListTile(
+      leading: const Icon(Icons.auto_graph),
+      title: Text('Cycle #${cycle.cycleNumber}'),
+      subtitle: Text(
+        '${cycle.completedRotations}/12 rotations completed (${progressPercentage.toStringAsFixed(0)}%)',
+      ),
+    );
+  }
+
+  Future<void> _confirmEndCycle() async {
+    if (_activeCycle == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('End Current Cycle?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Current Cycle: #${_activeCycle!.cycleNumber}'),
+            Text('Progress: ${_activeCycle!.completedRotations}/12 rotations'),
+            const SizedBox(height: 16),
+            const Text(
+              'This will:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text('• Complete the current cycle'),
+            Text('• Start Cycle #${_activeCycle!.cycleNumber + 1}'),
+            const Text('• Apply 90% deload to all lifts'),
+            const Text('• Reset all lifts to Stage 1'),
+            const SizedBox(height: 16),
+            const Text(
+              'Are you sure you want to continue?',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('End Cycle'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _endCycle();
+    }
+  }
+
+  Future<void> _endCycle() async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Call the use case to start a new cycle
+      final result = await _startNewCycle(NoParams());
+
+      // Close loading indicator
+      if (mounted) {
+        Navigator.pop(context);
+      }
+
+      result.fold(
+        (failure) {
+          _showError('Failed to end cycle: ${failure.message}');
+        },
+        (newCycleId) async {
+          // Reload settings to update cycle info
+          await _loadSettings();
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Cycle #${_activeCycle?.cycleNumber} started successfully!'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        },
+      );
+    } catch (e) {
+      // Close loading indicator if still open
+      if (mounted) {
+        Navigator.pop(context);
+      }
+      _showError('Failed to end cycle: $e');
     }
   }
 

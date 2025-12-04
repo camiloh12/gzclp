@@ -106,7 +106,10 @@ class WorkoutSessionRepositoryImpl implements WorkoutSessionRepository {
   Future<Either<Failure, int>> createSession(WorkoutSessionEntity session) async {
     try {
       final companion = WorkoutSessionCompanion.insert(
+        cycleId: session.cycleId,
         dayType: session.dayType,
+        rotationNumber: session.rotationNumber,
+        rotationPosition: session.rotationPosition,
         dateStarted: session.dateStarted,
         dateCompleted: drift.Value(session.dateCompleted),
         isFinalized: drift.Value(session.isFinalized),
@@ -162,7 +165,10 @@ class WorkoutSessionRepositoryImpl implements WorkoutSessionRepository {
   WorkoutSessionEntity _sessionToEntity(WorkoutSession session) {
     return WorkoutSessionEntity(
       id: session.id,
+      cycleId: session.cycleId,
       dayType: session.dayType,
+      rotationNumber: session.rotationNumber,
+      rotationPosition: session.rotationPosition,
       dateStarted: session.dateStarted,
       dateCompleted: session.dateCompleted,
       isFinalized: session.isFinalized,
@@ -174,7 +180,10 @@ class WorkoutSessionRepositoryImpl implements WorkoutSessionRepository {
   WorkoutSession _entityToSession(WorkoutSessionEntity entity) {
     return WorkoutSession(
       id: entity.id,
+      cycleId: entity.cycleId,
       dayType: entity.dayType,
+      rotationNumber: entity.rotationNumber,
+      rotationPosition: entity.rotationPosition,
       dateStarted: entity.dateStarted,
       dateCompleted: entity.dateCompleted,
       isFinalized: entity.isFinalized,

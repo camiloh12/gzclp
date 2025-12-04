@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dart run build_runner build:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(timeout 60 flutter run:*)",
+      "Bash(flutter run:*)",
+      "Bash(taskkill:*)",
+      "Bash(flutter test:*)",
+      "Bash(nc:*)",
+      "Bash(flutter build:*)",
+      "Bash(flutter clean:*)",
+      "Bash(dart compile js:*)",
+      "Bash(flutter pub:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

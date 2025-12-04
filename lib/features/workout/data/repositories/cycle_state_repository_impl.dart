@@ -49,7 +49,13 @@ class CycleStateRepositoryImpl implements CycleStateRepository {
     String tier,
   ) async {
     try {
-      final state = await database.cycleStatesDao.getCycleStateByLiftAndTier(liftId, tier);
+      // Get active cycle first
+      final activeCycle = await database.cyclesDao.getActiveCycle();
+      if (activeCycle == null) {
+        return Left(NotFoundFailure('No active cycle found'));
+      }
+
+      final state = await database.cycleStatesDao.getCycleStateByLiftAndTier(liftId, tier, activeCycle.id);
       if (state == null) {
         return Left(NotFoundFailure('CycleState for lift $liftId tier $tier not found'));
       }
@@ -64,7 +70,25 @@ class CycleStateRepositoryImpl implements CycleStateRepository {
   @override
   Future<Either<Failure, List<CycleStateEntity>>> getCycleStatesForLift(int liftId) async {
     try {
-      final states = await database.cycleStatesDao.getCycleStatesForLift(liftId);
+      // Get active cycle first
+      final activeCycle = await database.cyclesDao.getActiveCycle();
+      if (activeCycle == null) {
+        return Left(NotFoundFailure('No active cycle found'));
+      }
+
+      final states = await database.cycleStatesDao.getCycleStatesForLift(liftId, activeCycle.id);
+      return Right(states.map(_cycleStateToEntity).toList());
+    } on DatabaseException catch (e) {
+      return Left(DatabaseFailure(e.message));
+    } catch (e) {
+      return Left(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<CycleStateEntity>>> getCycleStatesForCycle(int cycleId) async {
+    try {
+      final states = await database.cycleStatesDao.getCycleStatesForCycle(cycleId);
       return Right(states.map(_cycleStateToEntity).toList());
     } on DatabaseException catch (e) {
       return Left(DatabaseFailure(e.message));
@@ -77,6 +101,37 @@ class CycleStateRepositoryImpl implements CycleStateRepository {
   Future<Either<Failure, int>> createCycleState(CycleStateEntity state) async {
     try {
       final companion = _entityToCycleStateCompanion(state);
+      final id = await database.cycleStatesDao.insertCycleState(companion);
+      return Right(id);
+    } on DatabaseException catch (e) {
+      return Left(DatabaseFailure(e.message));
+    } catch (e) {
+      return Left(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, int>> createCycleStateFromParams({
+    required int cycleId,
+    required int liftId,
+    required String tier,
+    required int stage,
+    required double nextTargetWeight,
+    double? lastStage1SuccessWeight,
+    int currentT3AmrapVolume = 0,
+  }) async {
+    try {
+      final now = DateTime.now();
+      final companion = CycleStateCompanion.insert(
+        cycleId: cycleId,
+        liftId: liftId,
+        currentTier: tier,
+        currentStage: stage,
+        nextTargetWeight: nextTargetWeight,
+        lastStage1SuccessWeight: drift.Value(lastStage1SuccessWeight),
+        currentT3AmrapVolume: drift.Value(currentT3AmrapVolume),
+        lastUpdated: drift.Value(now),
+      );
       final id = await database.cycleStatesDao.insertCycleState(companion);
       return Right(id);
     } on DatabaseException catch (e) {
@@ -122,9 +177,16 @@ class CycleStateRepositoryImpl implements CycleStateRepository {
     required double t3StartWeight,
   }) async {
     try {
+      // Get active cycle
+      final activeCycle = await database.cyclesDao.getActiveCycle();
+      if (activeCycle == null) {
+        return Left(NotFoundFailure('No active cycle found'));
+      }
+
       final now = DateTime.now();
       final states = [
         CycleStateCompanion.insert(
+          cycleId: activeCycle.id,
           liftId: liftId,
           currentTier: 'T1',
           currentStage: 1,
@@ -132,6 +194,7 @@ class CycleStateRepositoryImpl implements CycleStateRepository {
           lastUpdated: drift.Value(now),
         ),
         CycleStateCompanion.insert(
+          cycleId: activeCycle.id,
           liftId: liftId,
           currentTier: 'T2',
           currentStage: 1,
@@ -139,6 +202,7 @@ class CycleStateRepositoryImpl implements CycleStateRepository {
           lastUpdated: drift.Value(now),
         ),
         CycleStateCompanion.insert(
+          cycleId: activeCycle.id,
           liftId: liftId,
           currentTier: 'T3',
           currentStage: 1,
@@ -160,6 +224,7 @@ class CycleStateRepositoryImpl implements CycleStateRepository {
   CycleStateEntity _cycleStateToEntity(CycleState state) {
     return CycleStateEntity(
       id: state.id,
+      cycleId: state.cycleId,
       liftId: state.liftId,
       currentTier: state.currentTier,
       currentStage: state.currentStage,
@@ -174,6 +239,7 @@ class CycleStateRepositoryImpl implements CycleStateRepository {
   CycleState _entityToCycleState(CycleStateEntity entity) {
     return CycleState(
       id: entity.id,
+      cycleId: entity.cycleId,
       liftId: entity.liftId,
       currentTier: entity.currentTier,
       currentStage: entity.currentStage,
@@ -187,6 +253,7 @@ class CycleStateRepositoryImpl implements CycleStateRepository {
   /// Convert domain CycleStateEntity to CycleStateCompanion for insert
   CycleStateCompanion _entityToCycleStateCompanion(CycleStateEntity entity) {
     return CycleStateCompanion.insert(
+      cycleId: entity.cycleId,
       liftId: entity.liftId,
       currentTier: entity.currentTier,
       currentStage: entity.currentStage,
