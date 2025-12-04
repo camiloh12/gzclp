@@ -7,7 +7,11 @@
       "Bash(flutter run:*)",
       "Bash(taskkill:*)",
       "Bash(flutter test:*)",
-      "Bash(nc:*)"
+      "Bash(nc:*)",
+      "Bash(flutter build:*)",
+      "Bash(flutter clean:*)",
+      "Bash(dart compile js:*)",
+      "Bash(flutter pub:*)"
     ],
     "deny": [],
     "ask": []

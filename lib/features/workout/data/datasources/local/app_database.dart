@@ -183,10 +183,19 @@ class AppDatabase extends _$AppDatabase {
 /// For Flutter apps, this creates or opens the SQLite database file
 /// in the application's documents directory.
 /// For web, uses SQLite via WebAssembly with IndexedDB storage.
+///
+/// IMPORTANT FOR WEB DEPLOYMENT:
+/// To enable proper persistence on web, the server must send these headers:
+///   Cross-Origin-Opener-Policy: same-origin
+///   Cross-Origin-Embedder-Policy: require-corp
+///
+/// Development: Use `dart run web_server.dart` after `flutter build web`
+/// Production: Configure your web server to send the above headers
+///
+/// Without these headers, the browser will use a fallback storage mode
+/// (sharedIndexedDb) which has known persistence issues.
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    // Mobile: SQLite in app documents directory
-    // Web: SQLite WASM with IndexedDB storage
     return driftDatabase(
       name: 'gzclp_tracker',
       web: DriftWebOptions(
@@ -495,11 +504,21 @@ class WorkoutSessionsDao extends DatabaseAccessor<AppDatabase> with _$WorkoutSes
 
   /// Finalize a session (mark as completed)
   Future<void> finalizeSession(int sessionId, DateTime completedAt) async {
-    await (update(workoutSessions)..where((tbl) => tbl.id.equals(sessionId)))
-        .write(WorkoutSessionCompanion(
-          dateCompleted: Value(completedAt),
-          isFinalized: const Value(true),
-        ));
+    // Wrap in a transaction to ensure proper IndexedDB persistence on web
+    await transaction(() async {
+      await (update(workoutSessions)..where((tbl) => tbl.id.equals(sessionId)))
+          .write(WorkoutSessionCompanion(
+            dateCompleted: Value(completedAt),
+            isFinalized: const Value(true),
+          ));
+    });
+
+    // Force a WAL checkpoint to flush writes to IndexedDB (critical for web persistence)
+    try {
+      await customStatement('PRAGMA wal_checkpoint(FULL)');
+    } catch (_) {
+      // WAL checkpoint may not be supported in all storage modes
+    }
   }
 
   /// Delete a session
