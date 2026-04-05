@@ -114,10 +114,6 @@ class WorkoutSessions extends Table {
   /// Used to track progress toward cycle completion
   IntColumn get rotationNumber => integer()();
 
-  /// Position within the rotation (1-4 for A, B, C, D)
-  /// A=1, B=2, C=3, D=4
-  IntColumn get rotationPosition => integer()();
-
   /// When the workout was started
   DateTimeColumn get dateStarted => dateTime()();
 

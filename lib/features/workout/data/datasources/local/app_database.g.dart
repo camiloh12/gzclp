@@ -1379,17 +1379,6 @@ class $WorkoutSessionsTable extends WorkoutSessions
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _rotationPositionMeta = const VerificationMeta(
-    'rotationPosition',
-  );
-  @override
-  late final GeneratedColumn<int> rotationPosition = GeneratedColumn<int>(
-    'rotation_position',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
   static const VerificationMeta _dateStartedMeta = const VerificationMeta(
     'dateStarted',
   );
@@ -1445,7 +1434,6 @@ class $WorkoutSessionsTable extends WorkoutSessions
     cycleId,
     dayType,
     rotationNumber,
-    rotationPosition,
     dateStarted,
     dateCompleted,
     isFinalized,
@@ -1492,17 +1480,6 @@ class $WorkoutSessionsTable extends WorkoutSessions
       );
     } else if (isInserting) {
       context.missing(_rotationNumberMeta);
-    }
-    if (data.containsKey('rotation_position')) {
-      context.handle(
-        _rotationPositionMeta,
-        rotationPosition.isAcceptableOrUnknown(
-          data['rotation_position']!,
-          _rotationPositionMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_rotationPositionMeta);
     }
     if (data.containsKey('date_started')) {
       context.handle(
@@ -1567,10 +1544,6 @@ class $WorkoutSessionsTable extends WorkoutSessions
         DriftSqlType.int,
         data['${effectivePrefix}rotation_number'],
       )!,
-      rotationPosition: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}rotation_position'],
-      )!,
       dateStarted: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}date_started'],
@@ -1611,10 +1584,6 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
   /// Used to track progress toward cycle completion
   final int rotationNumber;
 
-  /// Position within the rotation (1-4 for A, B, C, D)
-  /// A=1, B=2, C=3, D=4
-  final int rotationPosition;
-
   /// When the workout was started
   final DateTime dateStarted;
 
@@ -1632,7 +1601,6 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
     required this.cycleId,
     required this.dayType,
     required this.rotationNumber,
-    required this.rotationPosition,
     required this.dateStarted,
     this.dateCompleted,
     required this.isFinalized,
@@ -1645,7 +1613,6 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
     map['cycle_id'] = Variable<int>(cycleId);
     map['day_type'] = Variable<String>(dayType);
     map['rotation_number'] = Variable<int>(rotationNumber);
-    map['rotation_position'] = Variable<int>(rotationPosition);
     map['date_started'] = Variable<DateTime>(dateStarted);
     if (!nullToAbsent || dateCompleted != null) {
       map['date_completed'] = Variable<DateTime>(dateCompleted);
@@ -1663,7 +1630,6 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
       cycleId: Value(cycleId),
       dayType: Value(dayType),
       rotationNumber: Value(rotationNumber),
-      rotationPosition: Value(rotationPosition),
       dateStarted: Value(dateStarted),
       dateCompleted: dateCompleted == null && nullToAbsent
           ? const Value.absent()
@@ -1685,7 +1651,6 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
       cycleId: serializer.fromJson<int>(json['cycleId']),
       dayType: serializer.fromJson<String>(json['dayType']),
       rotationNumber: serializer.fromJson<int>(json['rotationNumber']),
-      rotationPosition: serializer.fromJson<int>(json['rotationPosition']),
       dateStarted: serializer.fromJson<DateTime>(json['dateStarted']),
       dateCompleted: serializer.fromJson<DateTime?>(json['dateCompleted']),
       isFinalized: serializer.fromJson<bool>(json['isFinalized']),
@@ -1700,7 +1665,6 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
       'cycleId': serializer.toJson<int>(cycleId),
       'dayType': serializer.toJson<String>(dayType),
       'rotationNumber': serializer.toJson<int>(rotationNumber),
-      'rotationPosition': serializer.toJson<int>(rotationPosition),
       'dateStarted': serializer.toJson<DateTime>(dateStarted),
       'dateCompleted': serializer.toJson<DateTime?>(dateCompleted),
       'isFinalized': serializer.toJson<bool>(isFinalized),
@@ -1713,7 +1677,6 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
     int? cycleId,
     String? dayType,
     int? rotationNumber,
-    int? rotationPosition,
     DateTime? dateStarted,
     Value<DateTime?> dateCompleted = const Value.absent(),
     bool? isFinalized,
@@ -1723,7 +1686,6 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
     cycleId: cycleId ?? this.cycleId,
     dayType: dayType ?? this.dayType,
     rotationNumber: rotationNumber ?? this.rotationNumber,
-    rotationPosition: rotationPosition ?? this.rotationPosition,
     dateStarted: dateStarted ?? this.dateStarted,
     dateCompleted: dateCompleted.present
         ? dateCompleted.value
@@ -1739,9 +1701,6 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
       rotationNumber: data.rotationNumber.present
           ? data.rotationNumber.value
           : this.rotationNumber,
-      rotationPosition: data.rotationPosition.present
-          ? data.rotationPosition.value
-          : this.rotationPosition,
       dateStarted: data.dateStarted.present
           ? data.dateStarted.value
           : this.dateStarted,
@@ -1764,7 +1723,6 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
           ..write('cycleId: $cycleId, ')
           ..write('dayType: $dayType, ')
           ..write('rotationNumber: $rotationNumber, ')
-          ..write('rotationPosition: $rotationPosition, ')
           ..write('dateStarted: $dateStarted, ')
           ..write('dateCompleted: $dateCompleted, ')
           ..write('isFinalized: $isFinalized, ')
@@ -1779,7 +1737,6 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
     cycleId,
     dayType,
     rotationNumber,
-    rotationPosition,
     dateStarted,
     dateCompleted,
     isFinalized,
@@ -1793,7 +1750,6 @@ class WorkoutSession extends DataClass implements Insertable<WorkoutSession> {
           other.cycleId == this.cycleId &&
           other.dayType == this.dayType &&
           other.rotationNumber == this.rotationNumber &&
-          other.rotationPosition == this.rotationPosition &&
           other.dateStarted == this.dateStarted &&
           other.dateCompleted == this.dateCompleted &&
           other.isFinalized == this.isFinalized &&
@@ -1805,7 +1761,6 @@ class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
   final Value<int> cycleId;
   final Value<String> dayType;
   final Value<int> rotationNumber;
-  final Value<int> rotationPosition;
   final Value<DateTime> dateStarted;
   final Value<DateTime?> dateCompleted;
   final Value<bool> isFinalized;
@@ -1815,7 +1770,6 @@ class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
     this.cycleId = const Value.absent(),
     this.dayType = const Value.absent(),
     this.rotationNumber = const Value.absent(),
-    this.rotationPosition = const Value.absent(),
     this.dateStarted = const Value.absent(),
     this.dateCompleted = const Value.absent(),
     this.isFinalized = const Value.absent(),
@@ -1826,7 +1780,6 @@ class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
     required int cycleId,
     required String dayType,
     required int rotationNumber,
-    required int rotationPosition,
     required DateTime dateStarted,
     this.dateCompleted = const Value.absent(),
     this.isFinalized = const Value.absent(),
@@ -1834,14 +1787,12 @@ class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
   }) : cycleId = Value(cycleId),
        dayType = Value(dayType),
        rotationNumber = Value(rotationNumber),
-       rotationPosition = Value(rotationPosition),
        dateStarted = Value(dateStarted);
   static Insertable<WorkoutSession> custom({
     Expression<int>? id,
     Expression<int>? cycleId,
     Expression<String>? dayType,
     Expression<int>? rotationNumber,
-    Expression<int>? rotationPosition,
     Expression<DateTime>? dateStarted,
     Expression<DateTime>? dateCompleted,
     Expression<bool>? isFinalized,
@@ -1852,7 +1803,6 @@ class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
       if (cycleId != null) 'cycle_id': cycleId,
       if (dayType != null) 'day_type': dayType,
       if (rotationNumber != null) 'rotation_number': rotationNumber,
-      if (rotationPosition != null) 'rotation_position': rotationPosition,
       if (dateStarted != null) 'date_started': dateStarted,
       if (dateCompleted != null) 'date_completed': dateCompleted,
       if (isFinalized != null) 'is_finalized': isFinalized,
@@ -1865,7 +1815,6 @@ class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
     Value<int>? cycleId,
     Value<String>? dayType,
     Value<int>? rotationNumber,
-    Value<int>? rotationPosition,
     Value<DateTime>? dateStarted,
     Value<DateTime?>? dateCompleted,
     Value<bool>? isFinalized,
@@ -1876,7 +1825,6 @@ class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
       cycleId: cycleId ?? this.cycleId,
       dayType: dayType ?? this.dayType,
       rotationNumber: rotationNumber ?? this.rotationNumber,
-      rotationPosition: rotationPosition ?? this.rotationPosition,
       dateStarted: dateStarted ?? this.dateStarted,
       dateCompleted: dateCompleted ?? this.dateCompleted,
       isFinalized: isFinalized ?? this.isFinalized,
@@ -1898,9 +1846,6 @@ class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
     }
     if (rotationNumber.present) {
       map['rotation_number'] = Variable<int>(rotationNumber.value);
-    }
-    if (rotationPosition.present) {
-      map['rotation_position'] = Variable<int>(rotationPosition.value);
     }
     if (dateStarted.present) {
       map['date_started'] = Variable<DateTime>(dateStarted.value);
@@ -1924,7 +1869,6 @@ class WorkoutSessionCompanion extends UpdateCompanion<WorkoutSession> {
           ..write('cycleId: $cycleId, ')
           ..write('dayType: $dayType, ')
           ..write('rotationNumber: $rotationNumber, ')
-          ..write('rotationPosition: $rotationPosition, ')
           ..write('dateStarted: $dateStarted, ')
           ..write('dateCompleted: $dateCompleted, ')
           ..write('isFinalized: $isFinalized, ')
@@ -4837,7 +4781,6 @@ typedef $$WorkoutSessionsTableCreateCompanionBuilder =
       required int cycleId,
       required String dayType,
       required int rotationNumber,
-      required int rotationPosition,
       required DateTime dateStarted,
       Value<DateTime?> dateCompleted,
       Value<bool> isFinalized,
@@ -4849,7 +4792,6 @@ typedef $$WorkoutSessionsTableUpdateCompanionBuilder =
       Value<int> cycleId,
       Value<String> dayType,
       Value<int> rotationNumber,
-      Value<int> rotationPosition,
       Value<DateTime> dateStarted,
       Value<DateTime?> dateCompleted,
       Value<bool> isFinalized,
@@ -4926,11 +4868,6 @@ class $$WorkoutSessionsTableFilterComposer
 
   ColumnFilters<int> get rotationNumber => $composableBuilder(
     column: $table.rotationNumber,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get rotationPosition => $composableBuilder(
-    column: $table.rotationPosition,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5027,11 +4964,6 @@ class $$WorkoutSessionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get rotationPosition => $composableBuilder(
-    column: $table.rotationPosition,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<DateTime> get dateStarted => $composableBuilder(
     column: $table.dateStarted,
     builder: (column) => ColumnOrderings(column),
@@ -5093,11 +5025,6 @@ class $$WorkoutSessionsTableAnnotationComposer
 
   GeneratedColumn<int> get rotationNumber => $composableBuilder(
     column: $table.rotationNumber,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<int> get rotationPosition => $composableBuilder(
-    column: $table.rotationPosition,
     builder: (column) => column,
   );
 
@@ -5204,7 +5131,6 @@ class $$WorkoutSessionsTableTableManager
                 Value<int> cycleId = const Value.absent(),
                 Value<String> dayType = const Value.absent(),
                 Value<int> rotationNumber = const Value.absent(),
-                Value<int> rotationPosition = const Value.absent(),
                 Value<DateTime> dateStarted = const Value.absent(),
                 Value<DateTime?> dateCompleted = const Value.absent(),
                 Value<bool> isFinalized = const Value.absent(),
@@ -5214,7 +5140,6 @@ class $$WorkoutSessionsTableTableManager
                 cycleId: cycleId,
                 dayType: dayType,
                 rotationNumber: rotationNumber,
-                rotationPosition: rotationPosition,
                 dateStarted: dateStarted,
                 dateCompleted: dateCompleted,
                 isFinalized: isFinalized,
@@ -5226,7 +5151,6 @@ class $$WorkoutSessionsTableTableManager
                 required int cycleId,
                 required String dayType,
                 required int rotationNumber,
-                required int rotationPosition,
                 required DateTime dateStarted,
                 Value<DateTime?> dateCompleted = const Value.absent(),
                 Value<bool> isFinalized = const Value.absent(),
@@ -5236,7 +5160,6 @@ class $$WorkoutSessionsTableTableManager
                 cycleId: cycleId,
                 dayType: dayType,
                 rotationNumber: rotationNumber,
-                rotationPosition: rotationPosition,
                 dateStarted: dateStarted,
                 dateCompleted: dateCompleted,
                 isFinalized: isFinalized,

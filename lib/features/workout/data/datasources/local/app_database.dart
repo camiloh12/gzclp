@@ -40,7 +40,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -70,7 +70,6 @@ class AppDatabase extends _$AppDatabase {
           // Add cycle_id and rotation tracking to WorkoutSessions
           await m.addColumn(workoutSessions, workoutSessions.cycleId);
           await m.addColumn(workoutSessions, workoutSessions.rotationNumber);
-          await m.addColumn(workoutSessions, workoutSessions.rotationPosition);
 
           // Create initial cycle if data exists
           final liftsExist = await (selectOnly(lifts)..addColumns([lifts.id.count()])).getSingle();
@@ -99,18 +98,73 @@ class AppDatabase extends _$AppDatabase {
               .get();
 
             for (var i = 0; i < sessions.length; i++) {
-              final dayTypeToPosition = {'A': 1, 'B': 2, 'C': 3, 'D': 4};
-              final position = dayTypeToPosition[sessions[i].dayType] ?? 1;
               final rotation = (i ~/ 4) + 1; // Integer division to get rotation number
 
               await (update(workoutSessions)..where((t) => t.id.equals(sessions[i].id)))
                 .write(WorkoutSessionCompanion(
                   cycleId: Value(cycleId),
                   rotationNumber: Value(rotation),
-                  rotationPosition: Value(position),
                 ));
             }
           }
+        }
+        // Migration from version 4 to 5: rename dayType letters→numbers, drop rotationPosition
+        if (from < 5) {
+          // Rename dayType values in workout_sessions
+          await customStatement(
+            "UPDATE workout_sessions SET day_type = CASE day_type "
+            "WHEN 'A' THEN '1' WHEN 'B' THEN '2' "
+            "WHEN 'C' THEN '3' WHEN 'D' THEN '4' "
+            "ELSE day_type END",
+          );
+
+          // Rename dayType values in accessory_exercises
+          await customStatement(
+            "UPDATE accessory_exercises SET day_type = CASE day_type "
+            "WHEN 'A' THEN '1' WHEN 'B' THEN '2' "
+            "WHEN 'C' THEN '3' WHEN 'D' THEN '4' "
+            "ELSE day_type END",
+          );
+
+          // Drop rotationPosition column (SQLite requires recreate-and-copy)
+          await customStatement(
+            'CREATE TABLE workout_sessions_new ('
+            'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+            'cycle_id INTEGER NOT NULL REFERENCES cycles(id) ON DELETE CASCADE, '
+            'day_type TEXT NOT NULL CHECK(LENGTH(day_type) >= 1 AND LENGTH(day_type) <= 1), '
+            'rotation_number INTEGER NOT NULL, '
+            'date_started INTEGER NOT NULL, '
+            'date_completed INTEGER, '
+            'is_finalized INTEGER NOT NULL DEFAULT 0, '
+            'session_notes TEXT'
+            ')',
+          );
+          await customStatement(
+            'INSERT INTO workout_sessions_new '
+            '(id, cycle_id, day_type, rotation_number, date_started, '
+            'date_completed, is_finalized, session_notes) '
+            'SELECT id, cycle_id, day_type, rotation_number, date_started, '
+            'date_completed, is_finalized, session_notes '
+            'FROM workout_sessions',
+          );
+          await customStatement('DROP TABLE workout_sessions');
+          await customStatement(
+            'ALTER TABLE workout_sessions_new RENAME TO workout_sessions',
+          );
+
+          // Recreate indexes dropped with the old table
+          await customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_workout_sessions_is_finalized '
+            'ON workout_sessions(is_finalized)',
+          );
+          await customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_workout_sessions_date_started '
+            'ON workout_sessions(date_started DESC)',
+          );
+          await customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_workout_sessions_cycle_id '
+            'ON workout_sessions(cycle_id)',
+          );
         }
       },
       beforeOpen: (details) async {
