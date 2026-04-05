@@ -3,8 +3,8 @@
 /// These are recommended accessory exercises organized by workout day.
 /// Users can choose from these or create custom exercises.
 class T3ExerciseSuggestions {
-  /// Suggested T3 exercises for Day A (Squat focus)
-  static const List<String> dayA = [
+  /// Suggested T3 exercises for Day 1 (Squat focus)
+  static const List<String> day1 = [
     'Leg Press',
     'Leg Curls',
     'Leg Extensions',
@@ -17,8 +17,8 @@ class T3ExerciseSuggestions {
     'Front Squat',
   ];
 
-  /// Suggested T3 exercises for Day B (Bench Press focus)
-  static const List<String> dayB = [
+  /// Suggested T3 exercises for Day 2 (Bench Press focus)
+  static const List<String> day2 = [
     'Dumbbell Flyes',
     'Cable Crossover',
     'Incline Dumbbell Press',
@@ -31,8 +31,8 @@ class T3ExerciseSuggestions {
     'Push-Ups',
   ];
 
-  /// Suggested T3 exercises for Day C (Bench Press focus)
-  static const List<String> dayC = [
+  /// Suggested T3 exercises for Day 3 (Bench Press focus)
+  static const List<String> day3 = [
     'Dumbbell Row',
     'Lat Pulldown',
     'Seated Cable Row',
@@ -45,8 +45,8 @@ class T3ExerciseSuggestions {
     'Cable Curl',
   ];
 
-  /// Suggested T3 exercises for Day D (Deadlift focus)
-  static const List<String> dayD = [
+  /// Suggested T3 exercises for Day 4 (Deadlift focus)
+  static const List<String> day4 = [
     'Barbell Row',
     'Lat Pulldown',
     'Cable Row',
@@ -61,15 +61,15 @@ class T3ExerciseSuggestions {
 
   /// Get suggestions for a specific day
   static List<String> forDay(String dayType) {
-    switch (dayType.toUpperCase()) {
-      case 'A':
-        return dayA;
-      case 'B':
-        return dayB;
-      case 'C':
-        return dayC;
-      case 'D':
-        return dayD;
+    switch (dayType) {
+      case '1':
+        return day1;
+      case '2':
+        return day2;
+      case '3':
+        return day3;
+      case '4':
+        return day4;
       default:
         return [];
     }
@@ -77,19 +77,19 @@ class T3ExerciseSuggestions {
 
   /// All suggested exercises across all days
   static List<String> get all => [
-        ...dayA,
-        ...dayB,
-        ...dayC,
-        ...dayD,
+        ...day1,
+        ...day2,
+        ...day3,
+        ...day4,
       ];
 
   /// Default T3 exercise selection (one per day)
   /// These can be auto-selected if user wants quick setup
   static Map<String, String> get defaults => {
-        'A': 'Leg Press',
-        'B': 'Dumbbell Flyes',
-        'C': 'Lat Pulldown',
-        'D': 'Barbell Row',
+        '1': 'Leg Press',
+        '2': 'Dumbbell Flyes',
+        '3': 'Lat Pulldown',
+        '4': 'Barbell Row',
       };
 
   /// Get default exercises as a list with day types
