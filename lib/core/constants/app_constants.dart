@@ -22,7 +22,7 @@ class AppConstants {
   static const int databaseVersion = 1;
 
   // Workout Program Constants
-  static const List<String> workoutDays = ['A', 'B', 'C', 'D'];
+  static const List<String> workoutDays = ['1', '2', '3', '4'];
   static const List<String> tiers = ['T1', 'T2', 'T3'];
   static const List<int> stages = [1, 2, 3];
 
