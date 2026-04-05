@@ -10,13 +10,13 @@ import '../repositories/accessory_exercise_repository.dart';
 import '../repositories/cycle_state_repository.dart';
 import '../repositories/lift_repository.dart';
 
-/// Generates a workout plan for a specific day type (A, B, C, or D)
+/// Generates a workout plan for a specific day type
 ///
 /// GZCLP 4-DAY ROTATION:
-/// - Day A: Squat (T1), Overhead Press (T2), + T3 accessories
-/// - Day B: Bench Press (T1), Deadlift (T2), + T3 accessories
-/// - Day C: Squat (T2), Bench Press (T1), + T3 accessories
-/// - Day D: Deadlift (T1), Overhead Press (T2), + T3 accessories
+/// - Day 1: Squat (T1), Overhead Press (T2), + T3 accessories
+/// - Day 2: Bench Press (T1), Deadlift (T2), + T3 accessories
+/// - Day 3: Bench Press (T1), Squat (T2), + T3 accessories
+/// - Day 4: Deadlift (T1), Overhead Press (T2), + T3 accessories
 ///
 /// Returns a WorkoutPlan containing the lifts and their programmed weights/sets/reps
 class GenerateWorkoutForDay implements UseCase<WorkoutPlanEntity, WorkoutDayParams> {
@@ -33,7 +33,7 @@ class GenerateWorkoutForDay implements UseCase<WorkoutPlanEntity, WorkoutDayPara
   @override
   Future<Either<Failure, WorkoutPlanEntity>> call(WorkoutDayParams params) async {
     try {
-      final dayType = params.dayType.toUpperCase();
+      final dayType = params.dayType;
 
       // Validate day type
       if (!AppConstants.workoutDays.contains(dayType)) {
@@ -130,22 +130,22 @@ class GenerateWorkoutForDay implements UseCase<WorkoutPlanEntity, WorkoutDayPara
   /// Get lift assignments for a specific day
   _DayAssignment _getDayAssignment(String dayType) {
     switch (dayType) {
-      case 'A':
+      case '1':
         return _DayAssignment(
           t1Lift: AppConstants.liftSquat,
           t2Lift: AppConstants.liftOhp,
         );
-      case 'B':
+      case '2':
         return _DayAssignment(
           t1Lift: AppConstants.liftBench,
           t2Lift: AppConstants.liftDeadlift,
         );
-      case 'C':
+      case '3':
         return _DayAssignment(
           t1Lift: AppConstants.liftBench,
           t2Lift: AppConstants.liftSquat,
         );
-      case 'D':
+      case '4':
         return _DayAssignment(
           t1Lift: AppConstants.liftDeadlift,
           t2Lift: AppConstants.liftOhp,
