@@ -4,7 +4,7 @@ import 'package:gzclp_tracker/core/constants/app_constants.dart';
 void main() {
   group('AppConstants', () {
     test('should have correct workout days', () {
-      expect(AppConstants.workoutDays, equals(['A', 'B', 'C', 'D']));
+      expect(AppConstants.workoutDays, equals(['1', '2', '3', '4']));
     });
 
     test('should have correct tiers', () {
