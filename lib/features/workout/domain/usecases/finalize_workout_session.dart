@@ -124,27 +124,32 @@ class FinalizeWorkoutSession implements UseCase<void, FinalizeSessionParams> {
         return Left((finalizeResult as Left).value);
       }
 
-      // 7. Track rotation completion and auto-complete cycle
-      // Check if this session completes a rotation (position 4 = day D)
-      if (session.rotationPosition == 4) {
-        // Increment cycle's completed rotations
-        final incrementResult = await cycleRepository.incrementRotations(session.cycleId);
-        if (incrementResult.isLeft()) {
-          // Log error but don't fail the finalization
-          print('[FinalizeWorkoutSession] Warning: Failed to increment rotation count');
-        }
+      // 7. Track rotation completion — check if all 4 days of this rotation are now finalized
+      final dayTypesResult = await sessionRepository.getFinalizedDayTypesForRotation(
+        session.cycleId,
+        session.rotationNumber,
+      );
 
-        // Check if cycle should be completed (12 rotations)
-        final cycleResult = await cycleRepository.getCycleById(session.cycleId);
-        if (cycleResult.isRight()) {
-          final cycle = (cycleResult as Right).value;
-          if (cycle.completedRotations >= 12) {
-            // Auto-complete the cycle
-            final completeResult = await cycleRepository.completeCycle(cycle.id, DateTime.now());
-            if (completeResult.isLeft()) {
-              print('[FinalizeWorkoutSession] Warning: Failed to auto-complete cycle');
-            } else {
-              print('[FinalizeWorkoutSession] Cycle #${cycle.cycleNumber} completed after 12 rotations!');
+      if (dayTypesResult.isRight()) {
+        final finalizedDays = (dayTypesResult as Right).value;
+        if (finalizedDays.length == 4) {
+          // All 4 days done — increment rotation count
+          final incrementResult = await cycleRepository.incrementRotations(session.cycleId);
+          if (incrementResult.isLeft()) {
+            print('[FinalizeWorkoutSession] Warning: Failed to increment rotation count');
+          }
+
+          // Check if cycle is complete (12 rotations)
+          final cycleResult = await cycleRepository.getCycleById(session.cycleId);
+          if (cycleResult.isRight()) {
+            final cycle = (cycleResult as Right).value;
+            if (cycle.completedRotations >= 12) {
+              final completeResult = await cycleRepository.completeCycle(cycle.id, DateTime.now());
+              if (completeResult.isLeft()) {
+                print('[FinalizeWorkoutSession] Warning: Failed to auto-complete cycle');
+              } else {
+                print('[FinalizeWorkoutSession] Cycle #${cycle.cycleNumber} completed!');
+              }
             }
           }
         }
