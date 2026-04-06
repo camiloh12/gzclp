@@ -579,6 +579,21 @@ class WorkoutSessionsDao extends DatabaseAccessor<AppDatabase> with _$WorkoutSes
   Future<int> deleteSession(int id) {
     return (delete(workoutSessions)..where((tbl) => tbl.id.equals(id))).go();
   }
+
+  /// Get the set of distinct dayTypes that are finalized for a given rotation.
+  /// Returns e.g. {'1', '3'} if days 1 and 3 are done in that rotation.
+  Future<Set<String>> getFinalizedDayTypesForRotation(
+    int cycleId,
+    int rotationNumber,
+  ) async {
+    final results = await (select(workoutSessions)
+      ..where((tbl) =>
+          tbl.cycleId.equals(cycleId) &
+          tbl.rotationNumber.equals(rotationNumber) &
+          tbl.isFinalized.equals(true)))
+        .get();
+    return results.map((s) => s.dayType).toSet();
+  }
 }
 
 /// Data Access Object for WorkoutSets table

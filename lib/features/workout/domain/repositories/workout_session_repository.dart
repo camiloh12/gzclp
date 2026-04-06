@@ -42,4 +42,11 @@ abstract class WorkoutSessionRepository {
 
   /// Delete a session
   Future<Either<Failure, void>> deleteSession(int id);
+
+  /// Get the set of distinct dayTypes finalized for a rotation within a cycle.
+  /// Returns {'1', '2'} if days 1 and 2 are done, for example.
+  Future<Either<Failure, Set<String>>> getFinalizedDayTypesForRotation(
+    int cycleId,
+    int rotationNumber,
+  );
 }

@@ -160,6 +160,22 @@ class WorkoutSessionRepositoryImpl implements WorkoutSessionRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, Set<String>>> getFinalizedDayTypesForRotation(
+    int cycleId,
+    int rotationNumber,
+  ) async {
+    try {
+      final dayTypes = await database.workoutSessionsDao
+          .getFinalizedDayTypesForRotation(cycleId, rotationNumber);
+      return Right(dayTypes);
+    } on DatabaseException catch (e) {
+      return Left(DatabaseFailure(e.message));
+    } catch (e) {
+      return Left(DatabaseFailure(e.toString()));
+    }
+  }
+
   /// Convert database WorkoutSession to domain WorkoutSessionEntity
   WorkoutSessionEntity _sessionToEntity(WorkoutSession session) {
     return WorkoutSessionEntity(
