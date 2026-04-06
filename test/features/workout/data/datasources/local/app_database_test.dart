@@ -267,7 +267,6 @@ void main() {
         cycleId: cycleId,
         dayType: 'A',
         rotationNumber: 1,
-        rotationPosition: 1,
         dateStarted: DateTime.now(),
       );
 
@@ -288,21 +287,18 @@ void main() {
         cycleId: cycleId,
         dayType: 'A',
         rotationNumber: 1,
-        rotationPosition: 1,
         dateStarted: now.subtract(const Duration(days: 2)),
       ));
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
         cycleId: cycleId,
         dayType: 'B',
         rotationNumber: 1,
-        rotationPosition: 2,
         dateStarted: now.subtract(const Duration(days: 1)),
       ));
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
         cycleId: cycleId,
         dayType: 'C',
         rotationNumber: 1,
-        rotationPosition: 3,
         dateStarted: now,
       ));
 
@@ -320,7 +316,6 @@ void main() {
         cycleId: cycleId,
         dayType: 'A',
         rotationNumber: 1,
-        rotationPosition: 1,
         dateStarted: DateTime.now(),
         isFinalized: const Value(true),
       ));
@@ -328,7 +323,6 @@ void main() {
         cycleId: cycleId,
         dayType: 'B',
         rotationNumber: 1,
-        rotationPosition: 2,
         dateStarted: DateTime.now(),
       ));
 
@@ -347,7 +341,6 @@ void main() {
         cycleId: cycleId,
         dayType: 'A',
         rotationNumber: 1,
-        rotationPosition: 1,
         dateStarted: DateTime.now(),
       ));
 
@@ -367,21 +360,18 @@ void main() {
         cycleId: cycleId,
         dayType: 'A',
         rotationNumber: 1,
-        rotationPosition: 1,
         dateStarted: DateTime.now(),
       ));
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
         cycleId: cycleId,
         dayType: 'A',
         rotationNumber: 1,
-        rotationPosition: 1,
         dateStarted: DateTime.now().subtract(const Duration(days: 1)),
       ));
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
         cycleId: cycleId,
         dayType: 'B',
         rotationNumber: 1,
-        rotationPosition: 2,
         dateStarted: DateTime.now(),
       ));
 
@@ -414,7 +404,6 @@ void main() {
         cycleId: cycleId,
         dayType: 'A',
         rotationNumber: 1,
-        rotationPosition: 1,
         dateStarted: DateTime.now(),
       ));
     });

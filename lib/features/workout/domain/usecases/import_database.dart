@@ -102,7 +102,6 @@ class ImportDatabase {
               cycleId: session['cycleId'] as int? ?? 1, // Default to cycle 1 for old data
               dayType: session['dayType'] as String,
               rotationNumber: session['rotationNumber'] as int? ?? 1, // Default values for old data
-              rotationPosition: session['rotationPosition'] as int? ?? 1,
               dateStarted: DateTime.parse(session['dateStarted'] as String),
               dateCompleted: session['dateCompleted'] != null
                   ? drift.Value(DateTime.parse(session['dateCompleted'] as String))
