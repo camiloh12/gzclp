@@ -87,29 +87,8 @@ class ActiveWorkoutBloc extends Bloc<ActiveWorkoutEvent, ActiveWorkoutState> {
           }
           final activeCycle = cycleResult.getOrElse(() => throw Exception());
 
-          // Get last session to determine next rotation
-          final lastSessionResult = await sessionRepository.getLastFinalizedSession();
-          final int rotationNumber;
-          final int rotationPosition;
-
-          if (lastSessionResult.isLeft() || lastSessionResult.getOrElse(() => null) == null) {
-            // First session of the cycle
-            rotationNumber = 1;
-            rotationPosition = 1;
-          } else {
-            final lastSession = lastSessionResult.getOrElse(() => throw Exception())!;
-
-            // Calculate next position
-            if (lastSession.rotationPosition == 4) {
-              // Completed a rotation, start new one
-              rotationNumber = lastSession.rotationNumber + 1;
-              rotationPosition = 1;
-            } else {
-              // Continue in current rotation
-              rotationNumber = lastSession.rotationNumber;
-              rotationPosition = lastSession.rotationPosition + 1;
-            }
-          }
+          // rotationNumber = current active week = completedRotations + 1
+          final rotationNumber = activeCycle.completedRotations + 1;
 
           // Create session
           final session = WorkoutSessionEntity(
@@ -117,7 +96,6 @@ class ActiveWorkoutBloc extends Bloc<ActiveWorkoutEvent, ActiveWorkoutState> {
             cycleId: activeCycle.id,
             dayType: event.dayType,
             rotationNumber: rotationNumber,
-            rotationPosition: rotationPosition,
             dateStarted: DateTime.now(),
             dateCompleted: null,
             isFinalized: false,
