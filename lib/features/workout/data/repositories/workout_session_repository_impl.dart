@@ -53,18 +53,6 @@ class WorkoutSessionRepositoryImpl implements WorkoutSessionRepository {
   }
 
   @override
-  Future<Either<Failure, WorkoutSessionEntity?>> getLastFinalizedSession() async {
-    try {
-      final session = await database.workoutSessionsDao.getLastFinalizedSession();
-      return Right(session != null ? _sessionToEntity(session) : null);
-    } on DatabaseException catch (e) {
-      return Left(DatabaseFailure(e.message));
-    } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
-    }
-  }
-
-  @override
   Future<Either<Failure, WorkoutSessionEntity?>> getInProgressSession() async {
     try {
       final session = await database.workoutSessionsDao.getInProgressSession();

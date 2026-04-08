@@ -265,7 +265,7 @@ void main() {
       // Arrange
       final session = WorkoutSessionCompanion.insert(
         cycleId: cycleId,
-        dayType: 'A',
+        dayType: '1',
         rotationNumber: 1,
         dateStarted: DateTime.now(),
       );
@@ -276,7 +276,7 @@ void main() {
 
       // Assert
       expect(retrievedSession, isNotNull);
-      expect(retrievedSession!.dayType, equals('A'));
+      expect(retrievedSession!.dayType, equals('1'));
       expect(retrievedSession.isFinalized, isFalse);
     });
 
@@ -285,19 +285,19 @@ void main() {
       final now = DateTime.now();
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
         cycleId: cycleId,
-        dayType: 'A',
+        dayType: '1',
         rotationNumber: 1,
         dateStarted: now.subtract(const Duration(days: 2)),
       ));
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
         cycleId: cycleId,
-        dayType: 'B',
+        dayType: '2',
         rotationNumber: 1,
         dateStarted: now.subtract(const Duration(days: 1)),
       ));
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
         cycleId: cycleId,
-        dayType: 'C',
+        dayType: '3',
         rotationNumber: 1,
         dateStarted: now,
       ));
@@ -307,21 +307,21 @@ void main() {
 
       // Assert
       expect(lastSession, isNotNull);
-      expect(lastSession!.dayType, equals('C'));
+      expect(lastSession!.dayType, equals('3'));
     });
 
     test('should get in-progress session', () async {
       // Arrange
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
         cycleId: cycleId,
-        dayType: 'A',
+        dayType: '1',
         rotationNumber: 1,
         dateStarted: DateTime.now(),
         isFinalized: const Value(true),
       ));
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
         cycleId: cycleId,
-        dayType: 'B',
+        dayType: '2',
         rotationNumber: 1,
         dateStarted: DateTime.now(),
       ));
@@ -331,7 +331,7 @@ void main() {
 
       // Assert
       expect(inProgress, isNotNull);
-      expect(inProgress!.dayType, equals('B'));
+      expect(inProgress!.dayType, equals('2'));
       expect(inProgress.isFinalized, isFalse);
     });
 
@@ -339,7 +339,7 @@ void main() {
       // Arrange
       final id = await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
         cycleId: cycleId,
-        dayType: 'A',
+        dayType: '1',
         rotationNumber: 1,
         dateStarted: DateTime.now(),
       ));
@@ -358,29 +358,119 @@ void main() {
       // Arrange
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
         cycleId: cycleId,
-        dayType: 'A',
+        dayType: '1',
         rotationNumber: 1,
         dateStarted: DateTime.now(),
       ));
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
         cycleId: cycleId,
-        dayType: 'A',
+        dayType: '1',
         rotationNumber: 1,
         dateStarted: DateTime.now().subtract(const Duration(days: 1)),
       ));
       await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
         cycleId: cycleId,
-        dayType: 'B',
+        dayType: '2',
         rotationNumber: 1,
         dateStarted: DateTime.now(),
       ));
 
       // Act
-      final dayASessions = await database.workoutSessionsDao.getSessionsByDayType('A');
+      final dayASessions = await database.workoutSessionsDao.getSessionsByDayType('1');
 
       // Assert
       expect(dayASessions.length, equals(2));
-      expect(dayASessions.every((s) => s.dayType == 'A'), isTrue);
+      expect(dayASessions.every((s) => s.dayType == '1'), isTrue);
+    });
+
+    group('getFinalizedDayTypesForRotation', () {
+      test('returns empty set when no sessions exist for rotation', () async {
+        final result = await database.workoutSessionsDao
+            .getFinalizedDayTypesForRotation(cycleId, 1);
+        expect(result, isEmpty);
+      });
+
+      test('returns only finalized day types, not in-progress', () async {
+        await database.workoutSessionsDao.insertSession(
+          WorkoutSessionCompanion.insert(
+            cycleId: cycleId,
+            dayType: '1',
+            rotationNumber: 1,
+            dateStarted: DateTime.now(),
+            isFinalized: const Value(true),
+          ),
+        );
+        await database.workoutSessionsDao.insertSession(
+          WorkoutSessionCompanion.insert(
+            cycleId: cycleId,
+            dayType: '2',
+            rotationNumber: 1,
+            dateStarted: DateTime.now(),
+            isFinalized: const Value(false),
+          ),
+        );
+        final result = await database.workoutSessionsDao
+            .getFinalizedDayTypesForRotation(cycleId, 1);
+        expect(result, equals({'1'}));
+      });
+
+      test('filters by cycleId and rotationNumber', () async {
+        final cycleId2 = await database.cyclesDao.insertCycle(CycleCompanion.insert(
+          cycleNumber: 2,
+          startDate: DateTime.now(),
+          status: 'active',
+        ));
+        // cycleId, rotation 1 — day '1'
+        await database.workoutSessionsDao.insertSession(
+          WorkoutSessionCompanion.insert(
+            cycleId: cycleId,
+            dayType: '1',
+            rotationNumber: 1,
+            dateStarted: DateTime.now(),
+            isFinalized: const Value(true),
+          ),
+        );
+        // cycleId2, rotation 1 — day '2' (different cycle)
+        await database.workoutSessionsDao.insertSession(
+          WorkoutSessionCompanion.insert(
+            cycleId: cycleId2,
+            dayType: '2',
+            rotationNumber: 1,
+            dateStarted: DateTime.now(),
+            isFinalized: const Value(true),
+          ),
+        );
+        // cycleId, rotation 2 — day '3' (different rotation)
+        await database.workoutSessionsDao.insertSession(
+          WorkoutSessionCompanion.insert(
+            cycleId: cycleId,
+            dayType: '3',
+            rotationNumber: 2,
+            dateStarted: DateTime.now(),
+            isFinalized: const Value(true),
+          ),
+        );
+        final result = await database.workoutSessionsDao
+            .getFinalizedDayTypesForRotation(cycleId, 1);
+        expect(result, equals({'1'}));
+      });
+
+      test('returns all 4 day types when full rotation is complete', () async {
+        for (final day in ['1', '2', '3', '4']) {
+          await database.workoutSessionsDao.insertSession(
+            WorkoutSessionCompanion.insert(
+              cycleId: cycleId,
+              dayType: day,
+              rotationNumber: 1,
+              dateStarted: DateTime.now(),
+              isFinalized: const Value(true),
+            ),
+          );
+        }
+        final result = await database.workoutSessionsDao
+            .getFinalizedDayTypesForRotation(cycleId, 1);
+        expect(result, equals({'1', '2', '3', '4'}));
+      });
     });
   });
 
@@ -402,7 +492,7 @@ void main() {
       ));
       sessionId = await database.workoutSessionsDao.insertSession(WorkoutSessionCompanion.insert(
         cycleId: cycleId,
-        dayType: 'A',
+        dayType: '1',
         rotationNumber: 1,
         dateStarted: DateTime.now(),
       ));

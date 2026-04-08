@@ -16,9 +16,6 @@ abstract class WorkoutSessionRepository {
   /// Get the most recent session (finalized or not)
   Future<Either<Failure, WorkoutSessionEntity?>> getLastSession();
 
-  /// Get the most recent finalized session
-  Future<Either<Failure, WorkoutSessionEntity?>> getLastFinalizedSession();
-
   /// Get any in-progress (non-finalized) session
   Future<Either<Failure, WorkoutSessionEntity?>> getInProgressSession();
 
