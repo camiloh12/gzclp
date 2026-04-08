@@ -67,7 +67,7 @@ class _OnboardingWeightsStepState extends State<OnboardingWeightsStep> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Enter Your Training Maxes',
+          'Set your starting weights for Cycle 1',
           style: Theme.of(context).textTheme.headlineMedium,
           textAlign: TextAlign.center,
         ),

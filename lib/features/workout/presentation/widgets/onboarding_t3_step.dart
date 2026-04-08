@@ -38,10 +38,10 @@ class _OnboardingT3StepState extends State<OnboardingT3Step> {
 
     // Create controllers for each day
     _controllers = {
-      'A': TextEditingController(text: _selectedExercises['A'] ?? ''),
-      'B': TextEditingController(text: _selectedExercises['B'] ?? ''),
-      'C': TextEditingController(text: _selectedExercises['C'] ?? ''),
-      'D': TextEditingController(text: _selectedExercises['D'] ?? ''),
+      '1': TextEditingController(text: _selectedExercises['1'] ?? ''),
+      '2': TextEditingController(text: _selectedExercises['2'] ?? ''),
+      '3': TextEditingController(text: _selectedExercises['3'] ?? ''),
+      '4': TextEditingController(text: _selectedExercises['4'] ?? ''),
     };
 
     // Listen to text changes (use post-frame callback to avoid setState during build)
@@ -101,13 +101,13 @@ class _OnboardingT3StepState extends State<OnboardingT3Step> {
           Expanded(
             child: ListView(
               children: [
-                _buildDayExerciseSelector(context, 'A', 'Squat Day'),
+                _buildDayExerciseSelector(context, '1', 'Squat Day'),
                 const SizedBox(height: 16),
-                _buildDayExerciseSelector(context, 'B', 'Bench Day'),
+                _buildDayExerciseSelector(context, '2', 'Bench Day'),
                 const SizedBox(height: 16),
-                _buildDayExerciseSelector(context, 'C', 'Bench/Back Day'),
+                _buildDayExerciseSelector(context, '3', 'Bench/Back Day'),
                 const SizedBox(height: 16),
-                _buildDayExerciseSelector(context, 'D', 'Deadlift Day'),
+                _buildDayExerciseSelector(context, '4', 'Deadlift Day'),
               ],
             ),
           ),
