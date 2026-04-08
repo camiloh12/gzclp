@@ -116,7 +116,7 @@ class ActiveWorkoutPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Day ${state.session.dayType} Workout'),
+        title: Text('Week ${state.session.rotationNumber} • Day ${state.session.dayType}'),
         actions: [
           // Session notes button
           IconButton(
