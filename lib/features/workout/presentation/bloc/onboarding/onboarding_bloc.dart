@@ -47,17 +47,14 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     emit(const OnboardingCheckingStatus());
 
     try {
-      // Check if user has completed onboarding
-      final hasCompleted = await database.userPreferencesDao.hasCompletedOnboarding();
-
-      if (hasCompleted) {
+      // App is set up when an active cycle exists
+      final activeCycle = await database.cyclesDao.getActiveCycle();
+      if (activeCycle != null) {
         emit(const OnboardingAlreadyComplete());
       } else {
-        // Start onboarding at step 0 (unit selection)
         emit(const OnboardingInProgress(currentStep: 0));
       }
     } catch (e) {
-      // If database check fails (first run), default to onboarding
       emit(const OnboardingInProgress(currentStep: 0));
     }
   }
