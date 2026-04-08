@@ -35,7 +35,7 @@ class HomePage extends StatelessWidget {
         ),
         body: BlocBuilder<SessionManagerBloc, SessionManagerState>(
           builder: (context, state) {
-            if (state is SessionManagerLoading) {
+            if (state is SessionManagerInitial || state is SessionManagerLoading) {
               return const Center(child: CircularProgressIndicator());
             }
             if (state is SessionManagerError) {
