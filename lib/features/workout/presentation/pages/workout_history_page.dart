@@ -41,27 +41,12 @@ class _WorkoutHistoryPageState extends State<WorkoutHistoryPage> {
                 });
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: null,
-                  child: Text('All Days'),
-                ),
+                const PopupMenuItem(value: null, child: Text('All Days')),
                 const PopupMenuDivider(),
-                const PopupMenuItem(
-                  value: 'A',
-                  child: Text('Day A'),
-                ),
-                const PopupMenuItem(
-                  value: 'B',
-                  child: Text('Day B'),
-                ),
-                const PopupMenuItem(
-                  value: 'C',
-                  child: Text('Day C'),
-                ),
-                const PopupMenuItem(
-                  value: 'D',
-                  child: Text('Day D'),
-                ),
+                const PopupMenuItem(value: '1', child: Text('Day 1')),
+                const PopupMenuItem(value: '2', child: Text('Day 2')),
+                const PopupMenuItem(value: '3', child: Text('Day 3')),
+                const PopupMenuItem(value: '4', child: Text('Day 4')),
               ],
             ),
           ],
@@ -185,16 +170,11 @@ class _WorkoutSessionCard extends StatelessWidget {
 
   Color _getDayTypeColor() {
     switch (session.dayType) {
-      case 'A':
-        return Colors.red;
-      case 'B':
-        return Colors.blue;
-      case 'C':
-        return Colors.green;
-      case 'D':
-        return Colors.orange;
-      default:
-        return Colors.grey;
+      case '1': return Colors.red;
+      case '2': return Colors.blue;
+      case '3': return Colors.green;
+      case '4': return Colors.orange;
+      default: return Colors.grey;
     }
   }
 
