@@ -46,4 +46,9 @@ abstract class WorkoutSessionRepository {
     int cycleId,
     int rotationNumber,
   );
+
+  /// Get all finalized sessions for a specific cycle
+  Future<Either<Failure, List<WorkoutSessionEntity>>> getFinalizedSessionsForCycle(
+    int cycleId,
+  );
 }

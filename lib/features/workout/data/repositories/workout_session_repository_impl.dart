@@ -164,6 +164,22 @@ class WorkoutSessionRepositoryImpl implements WorkoutSessionRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, List<WorkoutSessionEntity>>> getFinalizedSessionsForCycle(
+    int cycleId,
+  ) async {
+    try {
+      final all = await database.workoutSessionsDao.getSessionsForCycle(cycleId);
+      final finalized =
+          all.where((s) => s.isFinalized).map(_sessionToEntity).toList();
+      return Right(finalized);
+    } on DatabaseException catch (e) {
+      return Left(DatabaseFailure(e.message));
+    } catch (e) {
+      return Left(DatabaseFailure(e.toString()));
+    }
+  }
+
   /// Convert database WorkoutSession to domain WorkoutSessionEntity
   WorkoutSessionEntity _sessionToEntity(WorkoutSession session) {
     return WorkoutSessionEntity(

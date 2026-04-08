@@ -26,4 +26,7 @@ class AppRoutes {
 
   /// Settings
   static const String settings = '/settings';
+
+  /// New cycle setup
+  static const String newCycle = '/new-cycle';
 }

@@ -32,6 +32,7 @@ import '../../features/workout/presentation/bloc/workout_generation/workout_gene
     as features;
 import '../../features/workout/presentation/bloc/workout_history/workout_history_bloc.dart'
     as features;
+import '../../features/workout/presentation/bloc/new_cycle/new_cycle_cubit.dart';
 
 /// Dependency Injection Container
 ///
@@ -170,6 +171,17 @@ Future<void> init() async {
   sl.registerFactory(
     () => features.WorkoutHistoryBloc(
       sessionRepository: sl(),
+    ),
+  );
+
+  // New Cycle Cubit
+  sl.registerFactory<NewCycleCubit>(
+    () => NewCycleCubit(
+      cycleRepository: sl(),
+      cycleStateRepository: sl(),
+      liftRepository: sl(),
+      sessionRepository: sl(),
+      startNewCycle: sl(),
     ),
   );
 
