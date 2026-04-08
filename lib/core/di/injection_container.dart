@@ -142,6 +142,7 @@ Future<void> init() async {
   sl.registerFactory(
     () => features.SessionManagerBloc(
       sessionRepository: sl(),
+      cycleRepository: sl(),
     ),
   );
 

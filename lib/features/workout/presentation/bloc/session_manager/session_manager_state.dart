@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../domain/entities/cycle_entity.dart';
 import '../../../domain/entities/workout_session_entity.dart';
 
 abstract class SessionManagerState extends Equatable {
@@ -18,20 +19,41 @@ class SessionManagerLoading extends SessionManagerState {
 
 class SessionManagerInProgress extends SessionManagerState {
   final WorkoutSessionEntity session;
+  final CycleEntity? activeCycle;
+  final int currentWeek;
+  final Set<String> completedDaysThisWeek;
 
-  const SessionManagerInProgress(this.session);
+  const SessionManagerInProgress(
+    this.session, {
+    this.activeCycle,
+    this.currentWeek = 1,
+    this.completedDaysThisWeek = const {},
+  });
 
   @override
-  List<Object?> get props => [session];
+  List<Object?> get props =>
+      [session, activeCycle, currentWeek, completedDaysThisWeek];
 }
 
 class SessionManagerNoSession extends SessionManagerState {
   final WorkoutSessionEntity? lastSession;
+  final CycleEntity? activeCycle;
+  final int currentWeek;
+  final Set<String> completedDaysThisWeek;
 
-  const SessionManagerNoSession({this.lastSession});
+  const SessionManagerNoSession({
+    this.lastSession,
+    this.activeCycle,
+    this.currentWeek = 1,
+    this.completedDaysThisWeek = const {},
+  });
+
+  bool get isCycleComplete =>
+      activeCycle != null && activeCycle!.completedRotations >= 12;
 
   @override
-  List<Object?> get props => [lastSession];
+  List<Object?> get props =>
+      [lastSession, activeCycle, currentWeek, completedDaysThisWeek];
 }
 
 class SessionManagerError extends SessionManagerState {

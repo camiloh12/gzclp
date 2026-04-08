@@ -1,14 +1,18 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../domain/repositories/cycle_repository.dart';
 import '../../../domain/repositories/workout_session_repository.dart';
 import 'session_manager_event.dart';
 import 'session_manager_state.dart';
 
-class SessionManagerBloc extends Bloc<SessionManagerEvent, SessionManagerState> {
+class SessionManagerBloc
+    extends Bloc<SessionManagerEvent, SessionManagerState> {
   final WorkoutSessionRepository sessionRepository;
+  final CycleRepository cycleRepository;
 
   SessionManagerBloc({
     required this.sessionRepository,
+    required this.cycleRepository,
   }) : super(const SessionManagerInitial()) {
     on<CheckInProgressSession>(_onCheckInProgressSession);
   }
@@ -20,6 +24,27 @@ class SessionManagerBloc extends Bloc<SessionManagerEvent, SessionManagerState> 
     emit(const SessionManagerLoading());
 
     try {
+      // Load active cycle
+      final cycleResult = await cycleRepository.getActiveCycle();
+      final activeCycle =
+          cycleResult.fold((_) => null, (cycle) => cycle);
+
+      final int currentWeek;
+      final Set<String> completedDaysThisWeek;
+
+      if (activeCycle != null) {
+        currentWeek = activeCycle.completedRotations + 1;
+        // Get finalized days for the current rotation
+        final daysResult = await sessionRepository
+            .getFinalizedDayTypesForRotation(
+                activeCycle.id, currentWeek);
+        completedDaysThisWeek =
+            daysResult.fold((_) => <String>{}, (days) => days);
+      } else {
+        currentWeek = 1;
+        completedDaysThisWeek = {};
+      }
+
       // Check for in-progress session
       final result = await sessionRepository.getInProgressSession();
 
@@ -27,13 +52,27 @@ class SessionManagerBloc extends Bloc<SessionManagerEvent, SessionManagerState> 
         (failure) async => emit(SessionManagerError(failure.message)),
         (session) async {
           if (session != null) {
-            emit(SessionManagerInProgress(session));
+            emit(SessionManagerInProgress(
+              session,
+              activeCycle: activeCycle,
+              currentWeek: currentWeek,
+              completedDaysThisWeek: completedDaysThisWeek,
+            ));
           } else {
-            // No in-progress workout, get last session for display
-            final lastResult = await sessionRepository.getLastFinalizedSession();
+            final lastResult =
+                await sessionRepository.getLastSession();
             lastResult.fold(
-              (_) => emit(const SessionManagerNoSession()),
-              (lastSession) => emit(SessionManagerNoSession(lastSession: lastSession)),
+              (_) => emit(SessionManagerNoSession(
+                activeCycle: activeCycle,
+                currentWeek: currentWeek,
+                completedDaysThisWeek: completedDaysThisWeek,
+              )),
+              (lastSession) => emit(SessionManagerNoSession(
+                lastSession: lastSession,
+                activeCycle: activeCycle,
+                currentWeek: currentWeek,
+                completedDaysThisWeek: completedDaysThisWeek,
+              )),
             );
           }
         },
