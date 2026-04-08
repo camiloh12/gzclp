@@ -179,7 +179,7 @@ class _NewCycleButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
       onPressed: () =>
-          Navigator.of(context).pushNamed('/new-cycle'),
+          Navigator.of(context).pushNamed(AppRoutes.newCycle),
       icon: const Icon(Icons.refresh),
       label: const Text('Start New Cycle'),
       style: ElevatedButton.styleFrom(
