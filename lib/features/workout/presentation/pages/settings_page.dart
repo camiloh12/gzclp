@@ -4,7 +4,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/di/injection_container.dart';
-import '../../../../core/usecases/usecase.dart';
 import '../../data/datasources/local/app_database.dart';
 import '../../domain/usecases/start_new_cycle.dart';
 
@@ -480,7 +479,9 @@ class _SettingsPageState extends State<SettingsPage> {
       );
 
       // Call the use case to start a new cycle
-      final result = await _startNewCycle(NoParams());
+      final result = await _startNewCycle(
+        const NewCycleWeightParams(weightOption: KeepWeights()),
+      );
 
       // Close loading indicator
       if (mounted) {

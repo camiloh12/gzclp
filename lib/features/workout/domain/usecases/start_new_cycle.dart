@@ -112,11 +112,11 @@ class StartNewCycle implements UseCase<int, NewCycleWeightParams> {
           );
 
           final double startWeight;
-          if (params.weightOption is CustomWeights) {
-            // Use caller-supplied weight if provided, else fall back to last weight
+          if (params.weightOption is CustomWeights && tier == 'T1') {
+            // Apply user-adjusted weight only to T1; T2/T3 keep their own ending weight
             startWeight = customWeightMap[lift.id] ?? oldState.nextTargetWeight;
           } else {
-            // KeepWeights: use last cycle's nextTargetWeight unchanged
+            // KeepWeights, or non-T1 tiers: use last cycle's nextTargetWeight unchanged
             startWeight = oldState.nextTargetWeight;
           }
 

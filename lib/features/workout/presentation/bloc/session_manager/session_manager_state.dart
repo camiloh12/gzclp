@@ -48,8 +48,7 @@ class SessionManagerNoSession extends SessionManagerState {
     this.completedDaysThisWeek = const {},
   });
 
-  bool get isCycleComplete =>
-      activeCycle != null && activeCycle!.completedRotations >= 12;
+  bool get isCycleComplete => activeCycle?.isReadyToComplete ?? false;
 
   @override
   List<Object?> get props =>

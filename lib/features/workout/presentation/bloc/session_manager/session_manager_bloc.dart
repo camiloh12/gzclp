@@ -29,19 +29,19 @@ class SessionManagerBloc
       final activeCycle =
           cycleResult.fold((_) => null, (cycle) => cycle);
 
-      final int currentWeek;
+      final int currentRotation;
       final Set<String> completedDaysThisWeek;
 
       if (activeCycle != null) {
-        currentWeek = activeCycle.completedRotations + 1;
+        currentRotation = activeCycle.completedRotations + 1;
         // Get finalized days for the current rotation
         final daysResult = await sessionRepository
             .getFinalizedDayTypesForRotation(
-                activeCycle.id, currentWeek);
+                activeCycle.id, currentRotation);
         completedDaysThisWeek =
             daysResult.fold((_) => <String>{}, (days) => days);
       } else {
-        currentWeek = 1;
+        currentRotation = 1;
         completedDaysThisWeek = {};
       }
 
@@ -55,7 +55,7 @@ class SessionManagerBloc
             emit(SessionManagerInProgress(
               session,
               activeCycle: activeCycle,
-              currentWeek: currentWeek,
+              currentWeek: currentRotation,
               completedDaysThisWeek: completedDaysThisWeek,
             ));
           } else {
@@ -64,13 +64,13 @@ class SessionManagerBloc
             lastResult.fold(
               (_) => emit(SessionManagerNoSession(
                 activeCycle: activeCycle,
-                currentWeek: currentWeek,
+                currentWeek: currentRotation,
                 completedDaysThisWeek: completedDaysThisWeek,
               )),
               (lastSession) => emit(SessionManagerNoSession(
                 lastSession: lastSession,
                 activeCycle: activeCycle,
-                currentWeek: currentWeek,
+                currentWeek: currentRotation,
                 completedDaysThisWeek: completedDaysThisWeek,
               )),
             );

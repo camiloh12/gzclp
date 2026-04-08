@@ -253,6 +253,12 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     Emitter<OnboardingState> emit,
   ) async {
     try {
+      // Invalidate any active cycle so splash routes back to onboarding
+      final activeCycle = await database.cyclesDao.getActiveCycle();
+      if (activeCycle != null) {
+        await database.cyclesDao.deleteCycle(activeCycle.id);
+      }
+
       // Reset onboarding flag in preferences
       await database.userPreferencesDao.updatePreferenceFields(
         hasCompletedOnboarding: false,
