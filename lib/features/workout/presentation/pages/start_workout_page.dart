@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../workout/data/datasources/local/app_database.dart';
 import '../../../workout/domain/entities/accessory_exercise_entity.dart';
 import '../../../workout/domain/repositories/accessory_exercise_repository.dart';
 import '../bloc/active_workout/active_workout_bloc.dart';
@@ -20,18 +21,21 @@ class StartWorkoutPage extends StatefulWidget {
 class _StartWorkoutPageState extends State<StartWorkoutPage> {
   final Map<String, List<AccessoryExerciseEntity>> _t3ExercisesByDay = {};
   bool _isLoadingT3 = true;
+  Set<String> _completedDaysThisWeek = {};
+  int _currentWeek = 1;
 
   @override
   void initState() {
     super.initState();
     _loadT3Exercises();
+    _loadCycleInfo();
   }
 
   Future<void> _loadT3Exercises() async {
     final accessoryRepo = sl<AccessoryExerciseRepository>();
 
     // Load T3 exercises for all days
-    for (final day in ['A', 'B', 'C', 'D']) {
+    for (final day in ['1', '2', '3', '4']) {
       final result = await accessoryRepo.getAccessoriesForDay(day);
       result.fold(
         (_) => _t3ExercisesByDay[day] = [],
@@ -42,6 +46,22 @@ class _StartWorkoutPageState extends State<StartWorkoutPage> {
     setState(() {
       _isLoadingT3 = false;
     });
+  }
+
+  Future<void> _loadCycleInfo() async {
+    final db = sl<AppDatabase>();
+    final activeCycle = await db.cyclesDao.getActiveCycle();
+    if (activeCycle != null) {
+      final currentWeek = activeCycle.completedRotations + 1;
+      final sessions = await db.workoutSessionsDao
+          .getFinalizedDayTypesForRotation(activeCycle.id, currentWeek);
+      if (mounted) {
+        setState(() {
+          _currentWeek = currentWeek;
+          _completedDaysThisWeek = sessions;
+        });
+      }
+    }
   }
 
   @override
@@ -89,12 +109,12 @@ class _StartWorkoutPageState extends State<StartWorkoutPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Select Workout Day',
+                    'Week $_currentWeek of 12',
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '4-day GZCLP rotation',
+                    'Select a day to train',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 24),
@@ -103,34 +123,38 @@ class _StartWorkoutPageState extends State<StartWorkoutPage> {
                       children: [
                         _buildDayCard(
                           context,
-                          'A',
+                          '1',
                           'Squat',
                           'Overhead Press',
-                          _t3ExercisesByDay['A'] ?? [],
+                          _t3ExercisesByDay['1'] ?? [],
+                          _completedDaysThisWeek,
                         ),
                         const SizedBox(height: 12),
                         _buildDayCard(
                           context,
-                          'B',
+                          '2',
                           'Bench Press',
                           'Deadlift',
-                          _t3ExercisesByDay['B'] ?? [],
+                          _t3ExercisesByDay['2'] ?? [],
+                          _completedDaysThisWeek,
                         ),
                         const SizedBox(height: 12),
                         _buildDayCard(
                           context,
-                          'C',
+                          '3',
                           'Bench Press',
                           'Squat',
-                          _t3ExercisesByDay['C'] ?? [],
+                          _t3ExercisesByDay['3'] ?? [],
+                          _completedDaysThisWeek,
                         ),
                         const SizedBox(height: 12),
                         _buildDayCard(
                           context,
-                          'D',
+                          '4',
                           'Deadlift',
                           'Overhead Press',
-                          _t3ExercisesByDay['D'] ?? [],
+                          _t3ExercisesByDay['4'] ?? [],
+                          _completedDaysThisWeek,
                         ),
                       ],
                     ),
@@ -147,6 +171,7 @@ class _StartWorkoutPageState extends State<StartWorkoutPage> {
     String t1Lift,
     String t2Lift,
     List<AccessoryExerciseEntity> t3Exercises,
+    Set<String> completedDays,
   ) {
     return Card(
       child: InkWell(
@@ -165,16 +190,20 @@ class _StartWorkoutPageState extends State<StartWorkoutPage> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
+                      color: completedDays.contains(dayType)
+                          ? Colors.green
+                          : Theme.of(context).colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Center(
-                      child: Text(
-                        dayType,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      child: completedDays.contains(dayType)
+                          ? const Icon(Icons.check, color: Colors.white)
+                          : Text(
+                              dayType,
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                  ),
                             ),
-                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -186,6 +215,13 @@ class _StartWorkoutPageState extends State<StartWorkoutPage> {
                           'Day $dayType',
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
+                        if (completedDays.contains(dayType))
+                          Text(
+                            'Done this week',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.green,
+                                ),
+                          ),
                       ],
                     ),
                   ),
