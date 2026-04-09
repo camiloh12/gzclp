@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
@@ -136,7 +137,7 @@ class FinalizeWorkoutSession implements UseCase<void, FinalizeSessionParams> {
           // All 4 days done — increment rotation count
           final incrementResult = await cycleRepository.incrementRotations(session.cycleId);
           if (incrementResult.isLeft()) {
-            print('[FinalizeWorkoutSession] Warning: Failed to increment rotation count');
+            debugPrint('[FinalizeWorkoutSession] Warning: Failed to increment rotation count');
           }
 
           // Check if cycle is complete (12 rotations)
@@ -146,9 +147,9 @@ class FinalizeWorkoutSession implements UseCase<void, FinalizeSessionParams> {
             if (cycle.completedRotations >= 12) {
               final completeResult = await cycleRepository.completeCycle(cycle.id, DateTime.now());
               if (completeResult.isLeft()) {
-                print('[FinalizeWorkoutSession] Warning: Failed to auto-complete cycle');
+                debugPrint('[FinalizeWorkoutSession] Warning: Failed to auto-complete cycle');
               } else {
-                print('[FinalizeWorkoutSession] Cycle #${cycle.cycleNumber} completed!');
+                debugPrint('[FinalizeWorkoutSession] Cycle #${cycle.cycleNumber} completed!');
               }
             }
           }

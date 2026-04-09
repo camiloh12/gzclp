@@ -11,7 +11,13 @@
       "Bash(flutter build:*)",
       "Bash(flutter clean:*)",
       "Bash(dart compile js:*)",
-      "Bash(flutter pub:*)"
+      "Bash(flutter pub:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(flutter --version)",
+      "Bash(dart --version)",
+      "Bash(dart pub:*)",
+      "Bash(flutter logs:*)"
     ],
     "deny": [],
     "ask": []
